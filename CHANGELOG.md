@@ -2,6 +2,13 @@
 
 Format : [Keep a Changelog](https://keepachangelog.com/fr/1.1.0/), versions [SemVer](https://semver.org/lang/fr/).
 
+## [0.2.0] - 2026-09-25
+
+### Modifié
+- Refonte visuelle façon article de mathématiques interactif : papier, typographie serif, figure légendée, commandes en texte, couleurs « encre » (clair et sombre).
+- Partie théorique réécrite en prose, avec références numérotées vers les sources.
+- Patron du cube avec corps noir et couleurs de stickers plus réalistes ; notation des mouvements avec prime typographique (R′).
+
 ## [0.1.0] - 2026-09-25
 
 ### Ajouté
