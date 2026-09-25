@@ -1,0 +1,268 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Rubik's Graph Solver</title>
+<style>
+  :root {
+    --bg: #f7f7f5; --card: #ffffff; --fg: #1c1c1e; --muted: #6b6b70; --border: #e2e2e0;
+    --p1: #d97706; --p2: #2563eb; --good: #16a34a; --bad: #dc2626; --neutral: #a1a1aa;
+    --g0: #f2efe8; --g1: #e8eefb;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      --bg: #141416; --card: #1d1d20; --fg: #ececee; --muted: #9a9aa2; --border: #2e2e33;
+      --p1: #f59e0b; --p2: #60a5fa; --good: #4ade80; --bad: #f87171; --neutral: #71717a;
+      --g0: #22211e; --g1: #1b2233;
+    }
+  }
+  * { box-sizing: border-box; }
+  body { margin: 0; background: var(--bg); color: var(--fg); font: 15px/1.5 system-ui, -apple-system, "Segoe UI", sans-serif; }
+  main { max-width: 1180px; margin: 0 auto; padding: 24px 16px 48px; }
+  h1 { margin: 0 0 4px; font-size: 26px; }
+  h2 { font-size: 18px; margin: 0 0 12px; }
+  h3 { font-size: 15px; margin: 0 0 6px; }
+  .sub { color: var(--muted); margin: 0 0 20px; }
+  .grid { display: grid; grid-template-columns: 380px 1fr; gap: 16px; align-items: start; }
+  .card { background: var(--card); border: 1px solid var(--border); border-radius: 12px; padding: 16px; }
+  svg { display: block; width: 100%; height: auto; }
+  .row { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 12px; }
+  button { font: inherit; padding: 6px 12px; border-radius: 8px; border: 1px solid var(--border); background: var(--card); color: var(--fg); cursor: pointer; }
+  button:hover:not(:disabled) { border-color: var(--muted); }
+  button:disabled { opacity: .45; cursor: default; }
+  button.primary { background: var(--fg); color: var(--bg); border-color: var(--fg); }
+  .pad { display: grid; grid-template-columns: repeat(6, 1fr); gap: 4px; margin-top: 12px; }
+  .pad button { padding: 4px 0; font-family: ui-monospace, monospace; }
+  .status { margin-top: 12px; color: var(--muted); font-size: 13px; min-height: 2.6em; }
+  .info { margin-top: 12px; min-height: 4.5em; }
+  .chips { display: flex; flex-wrap: wrap; gap: 4px; margin-top: 12px; }
+  .chip { font-family: ui-monospace, monospace; font-size: 13px; padding: 2px 8px; border-radius: 6px; border: 1px solid; background: none; }
+  .chip.p1 { color: var(--p1); } .chip.p2 { color: var(--p2); }
+  .chip.done { opacity: .4; }
+  .chip.cur { background: currentColor; } .chip.cur span { color: var(--card); }
+  .legend { display: flex; flex-wrap: wrap; gap: 14px; font-size: 13px; color: var(--muted); margin-top: 8px; }
+  .dot { display: inline-block; width: 10px; height: 10px; border-radius: 50%; margin-right: 4px; vertical-align: -1px; }
+  .theory { margin-top: 16px; display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 16px; }
+  .theory p, .theory ul { margin: 0 0 8px; color: var(--muted); }
+  .theory ul { padding-left: 18px; }
+  .theory b { color: var(--fg); }
+  #graph text { fill: var(--muted); font-size: 12px; }
+  #graph .lbl { font-family: ui-monospace, monospace; font-size: 11px; }
+  #graph .node { cursor: pointer; }
+  @media (max-width: 860px) { .grid { grid-template-columns: 1fr; } }
+</style>
+</head>
+<body>
+<main>
+  <h1>Rubik's Graph Solver</h1>
+  <p class="sub">Résolution d'un 3×3 comme un plus court chemin dans deux graphes imbriqués (algorithme de Kociemba).</p>
+
+  <div class="grid">
+    <section class="card">
+      <h2>Cube</h2>
+      <svg id="net" viewBox="0 0 12 9" role="img" aria-label="Patron du cube"></svg>
+      <div class="row">
+        <button id="scramble">Mélanger</button>
+        <button id="solve" class="primary" disabled>Résoudre</button>
+        <button id="reset">Réinitialiser</button>
+      </div>
+      <div class="pad" id="pad"></div>
+      <div class="status" id="status">Construction des tables de distances…</div>
+    </section>
+
+    <section class="card">
+      <h2>Chemin dans les graphes imbriqués</h2>
+      <svg id="graph" viewBox="0 0 640 640" role="img" aria-label="Graphe de résolution"></svg>
+      <div class="legend">
+        <span><i class="dot" style="background:var(--p1)"></i>phase 1 (G₀ → G₁)</span>
+        <span><i class="dot" style="background:var(--p2)"></i>phase 2 (G₁ → résolu)</span>
+        <span>voisins : <i class="dot" style="background:var(--good)"></i>h diminue
+          <i class="dot" style="background:var(--neutral)"></i>h égal
+          <i class="dot" style="background:var(--bad)"></i>h augmente</span>
+      </div>
+      <div class="row">
+        <button id="first" aria-label="Début">⏮</button>
+        <button id="prev" aria-label="Précédent">◀</button>
+        <button id="play">Lecture</button>
+        <button id="next" aria-label="Suivant">▶</button>
+        <button id="last" aria-label="Fin">⏭</button>
+      </div>
+      <div class="info" id="info">Mélangez le cube puis cliquez sur « Résoudre ».</div>
+      <div class="chips" id="chips"></div>
+    </section>
+  </div>
+
+  <section class="theory">
+    <div class="card">
+      <h3>1. Le cube est un groupe</h3>
+      <p>Les 6 rotations de faces engendrent un groupe <b>G₀</b> de
+        <b>43 252 003 274 489 856 000</b> éléments (2²⁷·3¹⁴·5³·7²·11). Chaque état est un élément, chaque mouvement une multiplication.</p>
+      <p>Trois invariants (torsion des coins mod 3, retournement des arêtes mod 2, parité des permutations) expliquent qu'un cube démonté puis remonté au hasard n'a qu'<b>1 chance sur 12</b> d'être soluble.</p>
+    </div>
+    <div class="card">
+      <h3>2. Graphe de Cayley</h3>
+      <p>Nœud = état, arête = un des 18 mouvements. Résoudre = trouver un plus court chemin vers le nœud « résolu ».</p>
+      <p>Son diamètre est <b>20</b> : le « nombre de Dieu » (Rokicki, Kociemba, Davidson, Dethridge, 2010). Mais 4,3·10¹⁹ nœuds : un BFS direct est impossible.</p>
+    </div>
+    <div class="card">
+      <h3>3. Graphes imbriqués</h3>
+      <p>On découpe via un sous-groupe <b>G₁ = ⟨U, D, R2, F2, L2, B2⟩</b> (orientations correctes, tranche E en place).</p>
+      <ul>
+        <li><b>Phase 1</b> : chemin dans le graphe quotient G₀/G₁ (2,2·10⁹ classes, diamètre 12).</li>
+        <li><b>Phase 2</b> : chemin dans le graphe de Cayley de G₁ (1,95·10¹⁰ nœuds, diamètre 18).</li>
+      </ul>
+      <p>Thistlethwaite (1981) utilisait 4 niveaux emboîtés, Kociemba (1992) 2.</p>
+    </div>
+    <div class="card">
+      <h3>4. Heuristique = BFS sur des projections</h3>
+      <p>On projette chaque graphe sur de petites coordonnées (orientation coins 3⁷, arêtes 2¹¹, tranche C(12,4)=495…). Un BFS exhaustif sur ces graphes réduits (~1 M nœuds) donne une distance qui <b>minore</b> la vraie : heuristique admissible.</p>
+      <p><b>IDA*</b> (Korf, 1985) explore alors en profondeur itérative en coupant toute branche où <code>profondeur + h &gt; limite</code>.</p>
+    </div>
+    <div class="card">
+      <h3>5. Liens avec d'autres sciences</h3>
+      <ul>
+        <li><b>Physique</b> : groupes de symétrie (cristaux, SU(3) des quarks) ; les invariants du cube sont des lois de conservation.</li>
+        <li><b>Chimie</b> : groupes ponctuels de symétrie moléculaire, même algèbre.</li>
+        <li><b>IA</b> : recherche heuristique A*/IDA*, heuristique apprise (DeepCubeA, 2019), convolution sur le graphe local (arXiv 2408.07945).</li>
+        <li><b>Informatique</b> : BFS, programmation dynamique, calcul distribué (preuve du nombre 20 : ~35 années CPU).</li>
+      </ul>
+    </div>
+  </section>
+</main>
+
+<script src="cube.js"></script>
+<script>
+  const $ = s => document.querySelector(s);
+  const STICKER = { U: '#ffffff', R: '#d32f2f', F: '#2e7d32', D: '#fdd835', L: '#f57c00', B: '#1565c0' };
+  const NET = { U: [3, 0], R: [6, 3], F: [3, 3], D: [3, 6], L: [0, 3], B: [9, 3] };
+  const esc = s => s.replace(/'/g, '&#39;');
+
+  let cube = Cube.solved(), sol = null, seq = [], states = [], step = 0, timer = null;
+  const current = () => sol ? states[step] : cube;
+
+  function drawNet() {
+    const f = Cube.facelets(current());
+    let s = '';
+    [...'URFDLB'].forEach((face, i) => {
+      const [x0, y0] = NET[face];
+      for (let k = 0; k < 9; k++)
+        s += `<rect x="${x0 + k % 3 + .05}" y="${y0 + ((k / 3) | 0) + .05}" width=".9" height=".9" rx=".12" fill="${STICKER[f[i * 9 + k]]}" stroke="#0003" stroke-width=".03"/>`;
+    });
+    $('#net').innerHTML = s;
+  }
+
+  // Nested rings: G0 ⊃ G1 ⊃ {solved}. Radius = remaining moves inside the current phase.
+  const C = 320, R0 = 300, R1 = 165;
+  function layout() {
+    const n = seq.length, n1 = sol.phase1.length, n2 = n - n1;
+    return states.map((_, i) => {
+      const r = i === n ? 0 : i < n1 ? R1 + 15 + (R0 - R1 - 40) * (n1 - i) / n1 : 40 + (R1 - 65) * (n - i) / n2;
+      const a = (-90 + (n ? i * 330 / n : 0)) * Math.PI / 180;
+      return [C + r * Math.cos(a), C + r * Math.sin(a)];
+    });
+  }
+
+  function drawGraph() {
+    let s = `<circle cx="${C}" cy="${C}" r="${R0}" fill="var(--g0)" stroke="var(--p1)" stroke-opacity=".5"/>
+      <circle cx="${C}" cy="${C}" r="${R1}" fill="var(--g1)" stroke="var(--p2)" stroke-opacity=".5"/>
+      <text x="${C}" y="${C + R0 - 14}" text-anchor="middle">G₀ = ⟨U,R,F,D,L,B⟩ · 4,3·10¹⁹ états</text>
+      <text x="${C}" y="${C - R1 + 22}" text-anchor="middle">G₁ = ⟨U,D,R2,F2,L2,B2⟩ · 1,95·10¹⁰</text>
+      <circle cx="${C}" cy="${C}" r="7" fill="var(--good)"/>
+      <text x="${C}" y="${C + 24}" text-anchor="middle">résolu</text>`;
+    if (sol) {
+      const P = layout(), n1 = sol.phase1.length;
+      const col = i => i < n1 ? 'var(--p1)' : 'var(--p2)';
+      seq.forEach((m, i) => {
+        const [x1, y1] = P[i], [x2, y2] = P[i + 1];
+        s += `<line x1="${x1}" y1="${y1}" x2="${x2}" y2="${y2}" stroke="${col(i)}" stroke-width="2" opacity="${i < step ? 1 : .35}"/>`;
+        const mx = (x1 + x2) / 2, my = (y1 + y2) / 2, d = Math.hypot(mx - C, my - C) || 1;
+        s += `<text class="lbl" x="${mx + (mx - C) / d * 12}" y="${my + (my - C) / d * 12 + 4}" text-anchor="middle">${esc(Cube.MOVE_NAMES[m])}</text>`;
+      });
+      if (step < seq.length) s += fan(P[step], P[step + 1]);
+      P.forEach(([x, y], i) => {
+        s += `<circle class="node" data-i="${i}" cx="${x}" cy="${y}" r="${i === step ? 8 : 5}" fill="${i === seq.length ? 'var(--good)' : col(i)}" stroke="var(--card)" stroke-width="2"><title>état ${i}</title></circle>`;
+      });
+    }
+    $('#graph').innerHTML = s;
+  }
+
+  // Local graph: the current state's neighbours, coloured by how the lower bound h changes.
+  let local = null;
+  function fan([x, y], [nx, ny]) {
+    const phase = step < sol.phase1.length ? 1 : 2, nb = Cube.neighbourhood(states[step], phase), n = nb.neighbours.length;
+    local = { phase, ...nb };
+    // rotate so the chosen neighbour points at the next node of the path
+    const a0 = Math.atan2(ny - y, nx - x) - 2 * Math.PI * nb.neighbours.findIndex(v => v.m === seq[step]) / n;
+    let s = '';
+    nb.neighbours.forEach(({ m, h }, k) => {
+      const a = a0 + 2 * Math.PI * k / n, px = x + 34 * Math.cos(a), py = y + 34 * Math.sin(a);
+      const c = h < nb.h ? 'var(--good)' : h > nb.h ? 'var(--bad)' : 'var(--neutral)', chosen = m === seq[step];
+      s += `<line x1="${x}" y1="${y}" x2="${px}" y2="${py}" stroke="${c}" opacity=".5"/>
+        <circle cx="${px}" cy="${py}" r="${chosen ? 6 : 4}" fill="${c}" ${chosen ? 'stroke="var(--fg)" stroke-width="2"' : ''}><title>${Cube.MOVE_NAMES[m]} → h=${h}</title></circle>`;
+    });
+    return s;
+  }
+
+  function drawInfo() {
+    if (!sol) { $('#info').textContent = 'Mélangez le cube puis cliquez sur « Résoudre ».'; $('#chips').innerHTML = ''; return; }
+    const n1 = sol.phase1.length, n = seq.length;
+    if (step === n) {
+      $('#info').innerHTML = `<b>Résolu.</b> ${n} coups : ${n1} en phase 1 + ${n - n1} en phase 2.`;
+    } else {
+      const { phase, h, neighbours } = local, down = neighbours.filter(v => v.h < h).length, up = neighbours.filter(v => v.h > h).length;
+      const next = neighbours.find(v => v.m === seq[step]).h, rem = phase === 1 ? n1 - step : n - step;
+      $('#info').innerHTML = (phase === 1
+        ? `<b style="color:var(--p1)">Phase 1</b> — graphe quotient G₀/G₁. Distance à G₁ ≥ <b>h = ${h}</b> (BFS sur orientations + tranche E).`
+        : `<b style="color:var(--p2)">Phase 2</b> — graphe de Cayley de G₁ (10 mouvements). Distance au résolu ≥ <b>h = ${h}</b> (BFS sur permutations).`)
+        + ` Sur ${neighbours.length} arêtes : ${down} rapprochent, ${neighbours.length - down - up} neutres, ${up} éloignent.`
+        + ` IDA* joue <b>${esc(Cube.MOVE_NAMES[seq[step]])}</b> (h ${h} → ${next}), reste ${rem} coup(s) dans cette phase.`;
+    }
+    $('#chips').innerHTML = seq.map((m, i) =>
+      `<button class="chip ${i < n1 ? 'p1' : 'p2'} ${i < step ? 'done' : ''} ${i === step ? 'cur' : ''}" data-i="${i}"><span>${esc(Cube.MOVE_NAMES[m])}</span></button>`).join('');
+  }
+
+  function render() {
+    drawNet(); drawGraph(); drawInfo();
+    for (const id of ['first', 'prev', 'next', 'last', 'play']) $('#' + id).disabled = !sol;
+  }
+
+  function setCube(c, msg) { stop(); cube = c; sol = null; seq = []; states = []; step = 0; if (msg) $('#status').textContent = msg; render(); }
+  function go(i) { if (sol) { step = Math.max(0, Math.min(seq.length, i)); render(); } }
+  function stop() { clearInterval(timer); timer = null; $('#play').textContent = 'Lecture'; }
+
+  $('#pad').innerHTML = Cube.MOVE_NAMES.map((n, m) => `<button data-m="${m}">${esc(n)}</button>`).join('');
+  $('#pad').onclick = e => { const m = e.target.closest('button')?.dataset.m; if (m) setCube(Cube.apply(current(), [+m])); };
+  $('#scramble').onclick = () => { const s = Cube.scramble(25); setCube(Cube.apply(Cube.solved(), s), 'Mélange : ' + Cube.format(s)); };
+  $('#reset').onclick = () => setCube(Cube.solved(), '');
+  $('#solve').onclick = () => {
+    const c = current(), t = performance.now();
+    const res = Cube.solve(c, 500);
+    setCube(c);
+    sol = res; seq = res.phase1.concat(res.phase2);
+    states = [c]; seq.forEach(m => states.push(Cube.apply(states[states.length - 1], [m])));
+    $('#status').textContent = `Solution : ${seq.length} coups en ${Math.round(performance.now() - t)} ms — ${Cube.format(seq) || '(déjà résolu)'}`;
+    render();
+  };
+  $('#first').onclick = () => { stop(); go(0); };
+  $('#prev').onclick = () => { stop(); go(step - 1); };
+  $('#next').onclick = () => { stop(); go(step + 1); };
+  $('#last').onclick = () => { stop(); go(seq.length); };
+  $('#play').onclick = () => {
+    if (timer) return stop();
+    if (step === seq.length) go(0);
+    $('#play').textContent = 'Pause';
+    timer = setInterval(() => { go(step + 1); if (step === seq.length) stop(); }, 700);
+  };
+  $('#graph').onclick = e => { const i = e.target.dataset.i; if (i) { stop(); go(+i); } };
+  $('#chips').onclick = e => { const i = e.target.closest('button')?.dataset.i; if (i) { stop(); go(+i); } };
+
+  render();
+  setTimeout(() => { // let the page paint before the ~1 s table build
+    const t = Cube.init();
+    $('#status').textContent = `Tables prêtes en ${t.ms} ms : 4 BFS sur des graphes projetés (4 031 685 nœuds au total).`;
+    $('#solve').disabled = false;
+  }, 30);
+</script>
+</body>
+</html>
