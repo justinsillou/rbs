@@ -2,6 +2,17 @@
 
 Format : [Keep a Changelog](https://keepachangelog.com/fr/1.1.0/), versions [SemVer](https://semver.org/lang/fr/).
 
+## [0.4.0] - 2026-09-25
+
+### Ajouté
+- Détours : à n'importe quelle étape, forcer un autre coup (clic sur un voisin du graphe ou sur un mouvement). Le solveur recalcule la suite ; la page affiche l'écart Δ de longueur et signale les contre-exemples à l'optimalité (Δ < 0 ou Δ > 2) et les sorties de G₁.
+- Longueur de mélange réglable et bouton « état aléatoire » (tirage uniforme dans G₀ sous les trois invariants, comme en compétition WCA).
+- Sections « Le mélange compte-t-il ? » / « Mélange fini et marche aléatoire » et « Et si on sort du chemin ? » / « Détours et contre-exemples ».
+- 10 références supplémentaires (Korf, Korf-Reid-Edelkamp, DeepCubeA, Diaconis, Joyner, Thistlethwaite, WCA, superflip…).
+
+### Modifié
+- Sur le graphe, la distance au centre représente maintenant la borne *h* de l'état (et non plus sa position dans la phase), ce qui permet de montrer un chemin qui ressort de G₁.
+
 ## [0.3.0] - 2026-09-25
 
 ### Ajouté

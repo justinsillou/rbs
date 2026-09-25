@@ -10,6 +10,8 @@ La page montre le cube (patron), le chemin sous forme de spirale G₀ → G₁ �
 
 Chaque étape est expliquée à deux niveaux, en parallèle : **En clair** (ce qui change sur le cube, pour tout le monde) et **En détail** (graphe de Schreier / Cayley, coordonnées, bornes IDA*, distributions de distances et probabilités).
 
+À tout moment, on peut **forcer un autre coup** (clic sur un voisin du graphe ou sur un mouvement) : le solveur recalcule la suite et la page montre ce que coûte le détour, avec les contre-exemples à l'optimalité quand il y en a. On peut aussi choisir la longueur du mélange ou tirer un **état aléatoire** uniforme.
+
 **Démo :** https://justinsillou.github.io/rbs/
 
 ## Déployer (GitHub Pages)

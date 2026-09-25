@@ -25,4 +25,9 @@ for (let i = 0; i < 20; i++) {
   console.log(`#${i} ${sol.length} moves (${sol.phase1.length}+${sol.phase2.length}) ${Date.now() - t} ms`);
 }
 assert(C.solve(s).length === 0);
+// Uniform random states (WCA-style) are always solvable.
+for (let i = 0; i < 5; i++) {
+  const r = C.randomState(), sol = C.solve(r, 300);
+  assert(C.isSolved(C.apply(r, sol.phase1.concat(sol.phase2))), 'random state not solved');
+}
 console.log('ok, avg', (total / 20).toFixed(1), 'moves');

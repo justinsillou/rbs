@@ -54,6 +54,18 @@
     return out;
   }
 
+  // Uniform random element of G0: random pieces, then fix the three invariants
+  // (corner twist ≡ 0 mod 3, edge flip ≡ 0 mod 2, equal permutation parities).
+  function randomState() {
+    const shuffle = n => { const p = [...Array(n).keys()]; for (let i = n - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [p[i], p[j]] = [p[j], p[i]]; } return p; };
+    const odd = p => p.reduce((s, x, i) => s ^ p.slice(i + 1).filter(y => y < x).length % 2, 0);
+    const c = { cp: shuffle(8), ep: shuffle(12), co: Array.from({ length: 8 }, () => Math.floor(Math.random() * 3)), eo: Array.from({ length: 12 }, () => Math.floor(Math.random() * 2)) };
+    if (odd(c.cp) !== odd(c.ep)) [c.ep[0], c.ep[1]] = [c.ep[1], c.ep[0]];
+    c.co[7] = (15 - c.co.slice(0, 7).reduce((a, b) => a + b, 0)) % 3;
+    c.eo[11] = c.eo.slice(0, 11).reduce((a, b) => a + b, 0) % 2;
+    return c;
+  }
+
   // Facelets (54 chars, order U R F D L B, each face row-major on the standard net).
   const CORNER_FACELET = [[8, 9, 20], [6, 18, 38], [0, 36, 47], [2, 45, 11], [29, 26, 15], [27, 44, 24], [33, 53, 42], [35, 17, 51]];
   const CORNER_COLOR = ['URF', 'UFL', 'ULB', 'UBR', 'DFR', 'DLF', 'DBL', 'DRB'];
@@ -219,6 +231,13 @@
     return { h: h(c), a, b, coords: k, neighbours: (phase === 1 ? ALL : P2).map(m => ({ m, h: h(mul(c, MOVES[m])) })) };
   }
 
-  const api = { MOVE_NAMES, solved, mul, apply, parse, format, isSolved, scramble, facelets, init, solve, neighbourhood };
+  // Which graph a state lives in (1 = outside G1, 2 = inside G1) and its lower bound h there.
+  function estimate(c) {
+    init();
+    const co = coC(c), eo = eoC(c), sl = sliceC(c);
+    return co || eo || sl ? { phase: 1, h: h1(co, eo, sl) } : { phase: 2, h: h2(cpC(c), udC(c), spC(c)) };
+  }
+
+  const api = { MOVE_NAMES, solved, mul, apply, parse, format, isSolved, scramble, randomState, facelets, init, solve, neighbourhood, estimate };
   if (typeof module !== 'undefined') module.exports = api; else root.Cube = api;
 })(this);

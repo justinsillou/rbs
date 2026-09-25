@@ -7,14 +7,14 @@
 <style>
   :root {
     --paper: #fbf8f1; --ink: #23201c; --soft: #6f675c; --faint: #ddd5c7;
-    --p1: #b0601e; --p2: #2f5288; --good: #4f7d3a; --bad: #a8412f; --neutral: #a59c8e;
+    --p1: #b0601e; --p2: #2f5288; --good: #4f7d3a; --bad: #a8412f; --neutral: #a59c8e; --dt: #8b3f8f;
     --serif: "Iowan Old Style", "Palatino Linotype", Palatino, "Book Antiqua", Georgia, serif;
     --mono: "SF Mono", Consolas, "Liberation Mono", monospace;
   }
   @media (prefers-color-scheme: dark) {
     :root:not([data-theme="light"]) {
       --paper: #1b1916; --ink: #e8e1d4; --soft: #a39a8b; --faint: #3b3731;
-      --p1: #e0934f; --p2: #8aa9da; --good: #8fbf73; --bad: #e0806c; --neutral: #7d7568;
+      --p1: #e0934f; --p2: #8aa9da; --good: #8fbf73; --bad: #e0806c; --neutral: #7d7568; --dt: #d08fd4;
     }
   }
   * { box-sizing: border-box; }
@@ -39,19 +39,22 @@
   }
   .controls button:hover:not(:disabled), .pad button:hover { text-decoration-color: var(--ink); }
   .controls button:disabled { color: var(--faint); cursor: default; text-decoration: none; }
+  .controls input { font: inherit; width: 3em; background: none; color: var(--ink); border: 0; border-bottom: 1px solid var(--faint); text-align: center; }
   .pad { font-family: var(--mono); font-size: 14px; line-height: 1.9; }
   .pad button { margin-right: 8px; }
+  .hint { font-size: 14px; color: var(--soft); font-style: italic; }
   .status { font-size: 14px; color: var(--soft); margin-top: 8px; }
   .key { font-size: 14px; color: var(--soft); }
   .key i { display: inline-block; width: 18px; border-top: 2px solid; vertical-align: 4px; margin: 0 4px 0 10px; }
+  .key i.dash { border-top-style: dashed; }
   .key i.d { width: 7px; height: 7px; border: 0; border-radius: 50%; vertical-align: 1px; }
   .seq { font-family: var(--mono); font-size: 14px; line-height: 2; margin-top: 6px; }
   .seq button { font: inherit; background: none; border: 0; padding: 0 2px; margin: 0 2px; cursor: pointer; border-bottom: 2px solid transparent; }
-  .seq .p1 { color: var(--p1); } .seq .p2 { color: var(--p2); }
+  .seq .p1 { color: var(--p1); } .seq .p2 { color: var(--p2); } .seq .p0 { color: var(--dt); font-weight: bold; }
   .seq .done { opacity: .45; } .seq .cur { border-bottom-color: currentColor; }
   #graph text { fill: var(--soft); font: italic 14px var(--serif); }
   #graph .lbl { font: 11px var(--mono); }
-  #graph .node { cursor: pointer; }
+  #graph .node, #graph .nb { cursor: pointer; }
 
   /* two parallel reading levels */
   .duo { display: grid; grid-template-columns: 1fr 1fr; column-gap: 56px; margin-top: 32px; }
@@ -61,7 +64,7 @@
   .head span { display: block; color: var(--soft); font-size: 14px; font-style: italic; }
   .deep { font-size: 15.5px; }
   .tag { font-variant: small-caps; letter-spacing: .04em; margin-bottom: 8px; }
-  .tag.p1 { color: var(--p1); } .tag.p2 { color: var(--p2); } .tag.ok { color: var(--good); }
+  .tag.p1 { color: var(--p1); } .tag.p2 { color: var(--p2); } .tag.ok { color: var(--good); } .tag.p0 { color: var(--dt); }
   table.meter { border-collapse: collapse; width: 100%; font-size: 15px; margin: 6px 0 12px; }
   table.meter td { padding: 3px 8px 3px 0; white-space: nowrap; }
   table.meter td.bar { width: 45%; }
@@ -70,22 +73,27 @@
   .histos { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin-top: 10px; font-size: 13px; color: var(--soft); }
   .histos text { fill: var(--soft); font: 9px var(--mono); }
   ol.refs { font-size: 14px; color: var(--soft); padding-left: 22px; margin-top: 40px; border-top: 1px solid var(--faint); padding-top: 16px; }
+  ol.refs li { margin-bottom: 4px; }
 </style>
 </head>
 <body>
 <main>
   <h1>Résoudre un Rubik's Cube en marchant dans un graphe</h1>
-  <p class="lede">Chaque mélange du cube est un point, chaque mouvement un chemin vers un point voisin. Ce solveur cherche le trajet vers le cube résolu en traversant deux graphes emboîtés. Chaque étape est expliquée deux fois : en clair à gauche, avec les mathématiques à droite.</p>
+  <p class="lede">Chaque mélange du cube est un point, chaque mouvement un chemin vers un point voisin. Ce solveur cherche le trajet vers le cube résolu en traversant deux graphes emboîtés. Chaque étape est expliquée deux fois : en clair à gauche, avec les mathématiques à droite. À tout moment, tu peux forcer un autre coup et voir comment le solveur s'adapte.</p>
 
   <div class="fig">
     <div>
       <svg id="net" viewBox="-.1 -.1 12.2 9.2" role="img" aria-label="Patron du cube"></svg>
       <div class="controls">
-        <button id="scramble">mélanger</button>
+        <button id="scramble">mélanger</button> en <input id="len" type="number" min="1" max="200" value="25" aria-label="Nombre de coups du mélange"> coups ·
+        <button id="random">état aléatoire</button>
+      </div>
+      <div class="controls">
         <button id="solve" disabled>résoudre</button>
         <button id="reset">remettre à zéro</button>
       </div>
       <div class="pad" id="pad" aria-label="Mouvements"></div>
+      <div class="hint">Pendant une résolution, ces boutons forcent un détour depuis l'étape courante.</div>
       <div class="status" id="status">Construction des tables de distances…</div>
     </div>
     <div>
@@ -99,10 +107,12 @@
       </div>
       <div class="key">
         <i style="color:var(--p1)"></i>phase 1
-        <i style="color:var(--p2)"></i>phase 2 ·
+        <i style="color:var(--p2)"></i>phase 2
+        <i class="dash" style="color:var(--dt)"></i>détour imposé ·
         voisins où <i class="d" style="background:var(--good)"></i>h baisse
         <i class="d" style="background:var(--neutral)"></i>stagne
-        <i class="d" style="background:var(--bad)"></i>monte
+        <i class="d" style="background:var(--bad)"></i>monte.
+        Distance au centre ∝ <i style="border:0;width:auto;margin:0">h</i>. Clique un voisin pour forcer ce coup.
       </div>
       <div class="seq" id="seq"></div>
     </div>
@@ -122,7 +132,7 @@
     </div>
     <div class="deep">
       <h3>Le groupe du cube</h3>
-      <p>Les rotations engendrent <i>G</i>₀ = ⟨U, R, F, D, L, B⟩, sous-groupe de 𝔖₄₈ (permutations des 48 facettes mobiles). Un état est un quadruplet (σ<sub>c</sub>, <i>o</i><sub>c</sub>, σ<sub>e</sub>, <i>o</i><sub>e</sub>) ∈ 𝔖₈ × ℤ₃⁸ × 𝔖₁₂ × ℤ₂¹². Le groupe des assemblages (𝔖₈ ⋉ ℤ₃⁸) × (𝔖₁₂ ⋉ ℤ₂¹²) contient <i>G</i>₀ comme sous-groupe d'indice 12, découpé par trois invariants : Σ<i>o</i><sub>c</sub> ≡ 0 (mod 3), Σ<i>o</i><sub>e</sub> ≡ 0 (mod 2), sgn σ<sub>c</sub> = sgn σ<sub>e</sub>.</p>
+      <p>Les rotations engendrent <i>G</i>₀ = ⟨U, R, F, D, L, B⟩, sous-groupe de 𝔖₄₈ (permutations des 48 facettes mobiles). Un état est un quadruplet (σ<sub>c</sub>, <i>o</i><sub>c</sub>, σ<sub>e</sub>, <i>o</i><sub>e</sub>) ∈ 𝔖₈ × ℤ₃⁸ × 𝔖₁₂ × ℤ₂¹². Le groupe des assemblages (𝔖₈ ⋉ ℤ₃⁸) × (𝔖₁₂ ⋉ ℤ₂¹²) contient <i>G</i>₀ comme sous-groupe d'indice 12, découpé par trois invariants : Σ<i>o</i><sub>c</sub> ≡ 0 (mod 3), Σ<i>o</i><sub>e</sub> ≡ 0 (mod 2), sgn σ<sub>c</sub> = sgn σ<sub>e</sub><sup><a href="#r9">[9]</a></sup>.</p>
       <p>|<i>G</i>₀| = 8!·3⁷·12!·2¹¹ / 2 = 2²⁷·3¹⁴·5³·7²·11. Un remontage uniforme tombe dans <i>G</i>₀ avec probabilité 1/12 ; ces invariants jouent le rôle de quantités conservées (analogue discret du théorème de Noether).</p>
     </div>
 
@@ -133,8 +143,8 @@
     </div>
     <div class="deep">
       <h3>Graphe de Cayley</h3>
-      <p>Γ = Cay(<i>G</i>₀, <i>S</i>), |<i>S</i>| = 18, <i>S</i> = <i>S</i>⁻¹ : graphe non orienté, 18-régulier, sommet-transitif. Son diamètre vaut 20 (Rokicki, Kociemba, Davidson, Dethridge, 2010)<sup><a href="#r2">[2]</a></sup> ; la plupart des positions sont à distance 18.</p>
-      <p>Borne inférieure par comptage : en interdisant deux coups sur la même face et en ordonnant les faces opposées (qui commutent), le nombre de séquences canoniques de longueur <i>k</i> croît comme ≈ 18·13,35<sup><i>k</i>−1</sup>. Comme Σ<sub><i>k</i>≤17</sub> reste inférieur à |<i>G</i>₀|, certaines positions exigent au moins 18 coups. Le « superflip » en exige exactement 20 (Reid, 1995).</p>
+      <p>Γ = Cay(<i>G</i>₀, <i>S</i>), |<i>S</i>| = 18, <i>S</i> = <i>S</i>⁻¹ : graphe non orienté, 18-régulier, sommet-transitif. Son diamètre vaut 20<sup><a href="#r2">[2]</a></sup> ; la plupart des positions sont à distance 18.</p>
+      <p>Borne inférieure par comptage : en interdisant deux coups sur la même face et en ordonnant les faces opposées (qui commutent), le nombre de séquences canoniques de longueur <i>k</i> croît comme ≈ 18·13,35<sup><i>k</i>−1</sup>. Comme Σ<sub><i>k</i>≤17</sub> reste inférieur à |<i>G</i>₀|, certaines positions exigent au moins 18 coups. Le « superflip » en exige exactement 20 (Reid, 1995)<sup><a href="#r12">[12]</a></sup>.</p>
     </div>
 
     <div>
@@ -145,7 +155,7 @@
     <div class="deep">
       <h3>Sous-groupe et graphe de Schreier</h3>
       <p><i>G</i>₁ = ⟨U, D, R2, F2, L2, B2⟩ est le stabilisateur des orientations et de la tranche E<sup><a href="#r1">[1]</a></sup>. Indice [<i>G</i>₀ : <i>G</i>₁] = 3⁷·2¹¹·C(12,4) = 2 217 093 120 ; un état uniforme est déjà dans <i>G</i>₁ avec probabilité ≈ 4,5·10⁻¹⁰.</p>
-      <p><span style="color:var(--p1)">Phase 1</span> : plus court chemin dans le graphe de Schreier Sch(<i>G</i>₀, <i>G</i>₁, <i>S</i>), dont les sommets sont les classes <i>G</i>₁<i>g</i> (diamètre 12). <span style="color:var(--p2)">Phase 2</span> : plus court chemin dans Cay(<i>G</i>₁, <i>S</i>₂), |<i>S</i>₂| = 10, |<i>G</i>₁| = 8!·8!·4!/2 = 19 508 428 800 (diamètre 18). Toute solution fait donc au plus 30 coups. Thistlethwaite (1981) utilisait une chaîne de quatre sous-groupes, pour au plus 52 coups.</p>
+      <p><span style="color:var(--p1)">Phase 1</span> : plus court chemin dans le graphe de Schreier Sch(<i>G</i>₀, <i>G</i>₁, <i>S</i>), dont les sommets sont les classes <i>G</i>₁<i>g</i> (diamètre 12). <span style="color:var(--p2)">Phase 2</span> : plus court chemin dans Cay(<i>G</i>₁, <i>S</i>₂), |<i>S</i>₂| = 10, |<i>G</i>₁| = 8!·8!·4!/2 = 19 508 428 800 (diamètre 18). Toute solution fait donc au plus 30 coups. Thistlethwaite (1981) utilisait une chaîne de quatre sous-groupes, pour au plus 52 coups<sup><a href="#r10">[10]</a></sup>.</p>
     </div>
 
     <div>
@@ -156,7 +166,29 @@
     <div class="deep">
       <h3>Heuristique admissible et IDA*</h3>
       <p>Une projection π : Γ → Γ′ (ici sur des coordonnées : orientation des coins 3⁷, des arêtes 2¹¹, tranche C(12,4)…) est un morphisme de graphes, donc 1-lipschitzienne : <i>d</i><sub>Γ′</sub>(π<i>x</i>, π<i>e</i>) ≤ <i>d</i><sub>Γ</sub>(<i>x</i>, <i>e</i>). Un BFS exhaustif sur Γ′ (~10⁶ sommets, coût O(|<i>V</i>|·|<i>S</i>|)) donne ces distances exactes. Le maximum de deux heuristiques admissibles reste admissible, et <i>h</i> est cohérente : |<i>h</i>(<i>x</i>) − <i>h</i>(<i>xs</i>)| ≤ 1.</p>
-      <p>IDA* (Korf, 1985) : DFS itératif avec la borne <i>f</i> = <i>g</i> + <i>h</i> ≤ <i>L</i>, mémoire O(<i>L</i>), optimal dans chaque phase. Le coût dépend de la distribution de <i>h</i> (histogrammes ci-dessus) : nombre de nœuds ≈ Σ<sub><i>d</i></sub> <i>N</i>(<i>d</i>)·P(<i>h</i> ≤ <i>L</i> − <i>d</i>) (Korf, Reid, Edelkamp, 2001).</p>
+      <p>IDA*<sup><a href="#r4">[4]</a></sup> : DFS itératif avec la borne <i>f</i> = <i>g</i> + <i>h</i> ≤ <i>L</i>, mémoire O(<i>L</i>), optimal dans chaque phase. Le coût dépend de la distribution de <i>h</i> (histogrammes ci-dessus) : nombre de nœuds ≈ Σ<sub><i>d</i></sub> <i>N</i>(<i>d</i>)·P(<i>h</i> ≤ <i>L</i> − <i>d</i>)<sup><a href="#r6">[6]</a></sup>. Korf a trouvé les premières solutions optimales de positions aléatoires ainsi, avec des tables de motifs plus grandes<sup><a href="#r5">[5]</a></sup>.</p>
+    </div>
+
+    <div>
+      <h3>Le mélange compte-t-il ?</h3>
+      <p>Le solveur ne sait pas comment le cube a été mélangé : il ne regarde que la position obtenue. Deux cubes identiques auront la même solution, qu'on ait fait 25 ou 1 000 mouvements pour y arriver.</p>
+      <p>Mais la longueur du mélange change les positions qu'on obtient. Après 3 coups, le cube est au plus à 3 coups de la solution : essaie de mélanger en 3 coups, le solveur trouve souvent le chemin inverse. Avec 25 coups, on peut tomber sur presque n'importe quelle position, mais pas toutes avec la même chance. C'est pour ça qu'en compétition, on tire directement une position au hasard (bouton « état aléatoire »)<sup><a href="#r11">[11]</a></sup>.</p>
+    </div>
+    <div class="deep">
+      <h3>Mélange fini et marche aléatoire</h3>
+      <p>La recherche est une fonction de l'état <i>x</i> seul : l'historique n'intervient pas (propriété de Markov). Ce qui dépend de la longueur <i>k</i>, c'est la <b>loi</b> de <i>x</i> : un mélange est une marche aléatoire <i>X<sub>k</sub></i> = <i>s</i>₁⋯<i>s<sub>k</sub></i> sur Cay(<i>G</i>₀, <i>S</i>), avec <i>d</i>(<i>X<sub>k</sub></i>) ≤ <i>k</i>. Pour <i>k</i> &lt; 20, les positions lointaines sont inaccessibles.</p>
+      <p>En métrique demi-tour, le graphe contient des triangles (R·R·R2 = <i>e</i>), donc n'est pas biparti : la chaîne est irréductible et apériodique et converge vers l'uniforme sur <i>G</i>₀<sup><a href="#r8">[8]</a></sup>. En métrique quart de tour, chaque quart de tour est une permutation impaire des 48 facettes : le graphe est biparti, un mélange de <i>k</i> quarts de tour n'atteint que la moitié de <i>G</i>₀ (parité de <i>k</i>) et la loi ne converge jamais vers l'uniforme. D'où les mélanges « à état aléatoire » de la WCA : tirer (σ<sub>c</sub>, <i>o</i><sub>c</sub>, σ<sub>e</sub>, <i>o</i><sub>e</sub>) uniformément sous les trois invariants, puis résoudre l'inverse.</p>
+    </div>
+
+    <div>
+      <h3>Et si on sort du chemin ?</h3>
+      <p>Clique sur un point autour de l'étape courante, ou sur un mouvement sous le cube : tu forces le solveur à jouer ce coup. Il recalcule alors un nouveau chemin depuis là. Souvent le détour coûte un ou deux coups. Parfois il ne coûte rien, et il arrive même qu'il raccourcisse la solution : preuve que le solveur ne trouve pas toujours le meilleur chemin.</p>
+      <p>Si tu es en mission 2 et que tu tournes une face d'un quart de tour sur le côté, tu fais ressortir le cube de la mission 2 : sur le dessin, le chemin repart vers le cercle extérieur.</p>
+    </div>
+    <div class="deep">
+      <h3>Détours et contre-exemples</h3>
+      <p>Forcer une arête <i>s</i> depuis <i>x</i> : par l'inégalité triangulaire, <i>d</i>(<i>xs</i>) ∈ {<i>d</i>(<i>x</i>) − 1, <i>d</i>(<i>x</i>), <i>d</i>(<i>x</i>) + 1}. Pour des chemins optimaux, l'écart de longueur totale vérifie donc Δ ∈ {0, 1, 2} (Δ = 1 possible car Γ n'est pas biparti). Tout Δ &lt; 0 observé est un <b>contre-exemple à l'optimalité</b> du chemin initial ; tout Δ &gt; 2 montre que le nouveau chemin n'est pas optimal. Kociemba borne le temps de calcul, pas la longueur.</p>
+      <p>Un coup hors de <i>S</i>₂ appliqué à <i>x</i> ∈ <i>G</i>₁ donne <i>xs</i> ∉ <i>G</i>₁ (car <i>G</i>₁ est un sous-groupe) : l'état retourne dans le graphe de Schreier et une nouvelle phase 1 est nécessaire. Autre contre-exemple classique : la meilleure phase 1 ne mène pas forcément à la meilleure solution totale, d'où l'énumération de plusieurs chemins de phase 1.</p>
     </div>
 
     <div>
@@ -165,14 +197,24 @@
     </div>
     <div class="deep">
       <h3>Liens avec d'autres sciences</h3>
-      <p><b>Physique</b> : groupes de symétrie (cristallographie, SU(3) des quarks), invariants et lois de conservation. <b>Chimie</b> : groupes ponctuels moléculaires. <b>Probabilités</b> : un mélange est une marche aléatoire sur Cay(<i>G</i>₀, <i>S</i>) ; combien de pas faut-il pour que la loi soit proche de l'uniforme ? C'est la question du temps de mélange des chaînes de Markov. <b>IA</b> : A*/IDA*, heuristique apprise par réseau de neurones (DeepCubeA, 2019), convolution sur la structure locale du graphe<sup><a href="#r3">[3]</a></sup>. <b>Informatique</b> : BFS, programmation dynamique, calcul distribué (la preuve du nombre 20 a demandé ~35 années CPU).</p>
+      <p><b>Physique</b> : groupes de symétrie (cristallographie, SU(3) des quarks), invariants et lois de conservation. <b>Chimie</b> : groupes ponctuels moléculaires. <b>Probabilités</b> : marches aléatoires sur les groupes et temps de mélange<sup><a href="#r8">[8]</a></sup>. <b>IA</b> : A*/IDA*, heuristique apprise par réseau de neurones et apprentissage par renforcement (DeepCubeA)<sup><a href="#r7">[7]</a></sup>, convolution sur la structure locale du graphe<sup><a href="#r3">[3]</a></sup>. <b>Informatique</b> : BFS, programmation dynamique, calcul distribué (la preuve du nombre 20 a demandé ~35 années CPU)<sup><a href="#r2">[2]</a></sup>.</p>
     </div>
   </div>
 
   <ol class="refs">
     <li id="r1">H. Kociemba, <a href="http://kociemba.org/cube.htm">The two-phase algorithm</a>.</li>
-    <li id="r2">T. Rokicki, H. Kociemba, M. Davidson, J. Dethridge, <a href="https://www.cube20.org/">God's Number is 20</a>, 2010. Voir aussi <a href="https://en.wikipedia.org/wiki/Optimal_solutions_for_the_Rubik%27s_Cube">Optimal solutions for the Rubik's Cube</a>.</li>
-    <li id="r3"><a href="https://arxiv.org/html/2408.07945v1">Solving a Rubik's Cube Using Its Local Graph Structure</a>, arXiv:2408.07945.</li>
+    <li id="r2">T. Rokicki, H. Kociemba, M. Davidson, J. Dethridge, <a href="https://doi.org/10.1137/120867366">The Diameter of the Rubik's Cube Group Is Twenty</a>, SIAM J. Discrete Math. 27(2), 2013 ; <a href="https://www.cube20.org/">cube20.org</a> ; <a href="https://en.wikipedia.org/wiki/Optimal_solutions_for_the_Rubik%27s_Cube">Optimal solutions for the Rubik's Cube</a>.</li>
+    <li id="r3"><a href="https://arxiv.org/html/2408.07945v1">Solving a Rubik's Cube Using Its Local Graph Structure</a>, arXiv:2408.07945, 2024.</li>
+    <li id="r4">R. E. Korf, <a href="https://doi.org/10.1016/0004-3702(85)90084-0">Depth-first iterative-deepening: an optimal admissible tree search</a>, Artificial Intelligence 27, 1985.</li>
+    <li id="r5">R. E. Korf, <a href="https://cdn.aaai.org/AAAI/1997/AAAI97-109.pdf">Finding optimal solutions to Rubik's Cube using pattern databases</a>, AAAI 1997.</li>
+    <li id="r6">R. E. Korf, M. Reid, S. Edelkamp, <a href="https://doi.org/10.1016/S0004-3702(01)00094-7">Time complexity of iterative-deepening-A*</a>, Artificial Intelligence 129, 2001.</li>
+    <li id="r7">F. Agostinelli, S. McAleer, A. Shmakov, P. Baldi, <a href="https://doi.org/10.1038/s42256-019-0070-z">Solving the Rubik's cube with deep reinforcement learning and search</a>, Nature Machine Intelligence 1, 2019.</li>
+    <li id="r8">P. Diaconis, <i>Group Representations in Probability and Statistics</i>, IMS Lecture Notes 11, 1988.</li>
+    <li id="r9">D. Joyner, <i>Adventures in Group Theory: Rubik's Cube, Merlin's Machine, and Other Mathematical Toys</i>, Johns Hopkins University Press, 2ᵉ éd. 2008.</li>
+    <li id="r10">J. Scherphuis, <a href="https://www.jaapsch.net/puzzles/thistle.htm">Thistlethwaite's 52-move algorithm</a>.</li>
+    <li id="r11">World Cube Association, <a href="https://www.worldcubeassociation.org/regulations/">Règlement, article 4 (mélanges)</a>.</li>
+    <li id="r12"><a href="https://en.wikipedia.org/wiki/Superflip">Superflip</a> (Wikipédia).</li>
+    <li id="r13"><a href="https://www.reddit.com/r/mildyinteresting/comments/1wknkco/solving_a_rubiks_cube_with_graph_theory/">Solving a Rubik's cube with graph theory</a> (Reddit).</li>
   </ol>
 </main>
 
@@ -191,10 +233,14 @@
   const sci = x => { const [m, e] = x.toExponential(1).split('e'); return `${m.replace('.', ',')}·10<sup>${+e}</sup>`; };
   const pct = x => (x && x < 1e-3 ? sci(100 * x) : (100 * x).toLocaleString('fr-FR', { maximumFractionDigits: 1 })) + ' %';
   const pl = (n, one, many) => `${n} ${n > 1 ? many : one}`;
+  const signed = d => (d > 0 ? '+' : d < 0 ? '−' : '') + Math.abs(d);
   const sgn = p => { let s = 1; for (let i = 0; i < p.length; i++) for (let j = i + 1; j < p.length; j++) if (p[i] > p[j]) s = -s; return s; };
 
-  let tables = null, cube = Cube.solved(), sol = null, seq = [], states = [], step = 0, timer = null;
-  const current = () => sol ? states[step] : cube;
+  // path[i] = { m, phase } with phase 1 / 2 from the solver, 0 for a move forced by the user.
+  let tables = null, cube = Cube.solved(), active = false, path = [], states = [], step = 0, timer = null;
+  let nodes = 0, firstLen = 0, detours = {};
+  const current = () => active ? states[step] : cube;
+  const zone = i => Cube.estimate(states[i]).phase;
 
   // What a child can see on the cube.
   function stats(c) {
@@ -221,16 +267,18 @@
     $('#net').innerHTML = s;
   }
 
-  // Nested rings: G0 ⊃ G1 ⊃ {solved}. Radius = remaining moves inside the current phase.
+  // Nested rings: G0 ⊃ G1 ⊃ {solved}. Radius = lower bound h in the graph the state lives in.
   const C = 320, R0 = 300, R1 = 165;
   function layout() {
-    const n = seq.length, n1 = sol.phase1.length, n2 = n - n1;
-    return states.map((_, i) => {
-      const r = i === n ? 0 : i < n1 ? R1 + 15 + (R0 - R1 - 40) * (n1 - i) / n1 : 40 + (R1 - 65) * (n - i) / n2;
+    const n = path.length;
+    return states.map((c, i) => {
+      const { phase, h } = Cube.estimate(c);
+      const r = phase === 1 ? R1 + 12 + (R0 - R1 - 35) * Math.min(h, 12) / 12 : (R1 - 20) * Math.min(h, 18) / 18;
       const a = (-90 + (n ? i * 330 / n : 0)) * Math.PI / 180;
-      return [C + r * Math.cos(a), C + r * Math.sin(a)];
+      return [C + r * Math.cos(a), C + r * Math.sin(a), phase];
     });
   }
+  const moveColor = p => ['var(--dt)', 'var(--p1)', 'var(--p2)'][p];
 
   let local = null;
   function drawGraph() {
@@ -241,18 +289,17 @@
       <circle cx="${C}" cy="${C}" r="5" fill="var(--ink)"/>
       <text x="${C}" y="${C + 24}" text-anchor="middle">résolu</text>`;
     local = null;
-    if (sol) {
-      const P = layout(), n1 = sol.phase1.length;
-      const col = i => i < n1 ? 'var(--p1)' : 'var(--p2)';
-      seq.forEach((m, i) => {
+    if (active) {
+      const P = layout();
+      path.forEach(({ m, phase }, i) => {
         const [x1, y1] = P[i], [x2, y2] = P[i + 1];
-        s += `<line x1="${x1}" y1="${y1}" x2="${x2}" y2="${y2}" stroke="${col(i)}" stroke-width="1.8" stroke-linecap="round" opacity="${i < step ? 1 : .3}"/>`;
+        s += `<line x1="${x1}" y1="${y1}" x2="${x2}" y2="${y2}" stroke="${moveColor(phase)}" stroke-width="1.8" stroke-linecap="round" ${phase ? '' : 'stroke-dasharray="5 4"'} opacity="${i < step ? 1 : .3}"/>`;
         const mx = (x1 + x2) / 2, my = (y1 + y2) / 2, d = Math.hypot(mx - C, my - C) || 1;
         s += `<text class="lbl" x="${mx + (mx - C) / d * 13}" y="${my + (my - C) / d * 13 + 4}" text-anchor="middle">${name(m)}</text>`;
       });
-      if (step < seq.length) s += fan(P[step], P[step + 1]);
-      P.forEach(([x, y], i) => {
-        const c = i === seq.length ? 'var(--ink)' : col(i);
+      if (step < path.length) s += fan(P[step], P[step + 1]);
+      P.forEach(([x, y, phase], i) => {
+        const c = i === path.length ? 'var(--ink)' : moveColor(phase);
         s += i === step
           ? `<circle class="node" data-i="${i}" cx="${x}" cy="${y}" r="7" fill="var(--paper)" stroke="${c}" stroke-width="2.5"><title>état ${i}</title></circle>`
           : `<circle class="node" data-i="${i}" cx="${x}" cy="${y}" r="4" fill="${c}"><title>état ${i}</title></circle>`;
@@ -263,16 +310,17 @@
 
   // Local graph: the current state's neighbours, coloured by how the lower bound h changes.
   function fan([x, y], [nx, ny]) {
-    const phase = step < sol.phase1.length ? 1 : 2, nb = Cube.neighbourhood(states[step], phase), n = nb.neighbours.length;
+    const phase = zone(step) === 2 && zone(step + 1) === 2 ? 2 : 1;
+    const nb = Cube.neighbourhood(states[step], phase), n = nb.neighbours.length;
     local = { phase, ...nb };
     // rotate so the chosen neighbour points at the next node of the path
-    const a0 = Math.atan2(ny - y, nx - x) - 2 * Math.PI * nb.neighbours.findIndex(v => v.m === seq[step]) / n;
+    const a0 = Math.atan2(ny - y, nx - x) - 2 * Math.PI * nb.neighbours.findIndex(v => v.m === path[step].m) / n;
     let s = '';
     nb.neighbours.forEach(({ m, h }, k) => {
       const a = a0 + 2 * Math.PI * k / n, px = x + 32 * Math.cos(a), py = y + 32 * Math.sin(a);
-      const c = h < nb.h ? 'var(--good)' : h > nb.h ? 'var(--bad)' : 'var(--neutral)', chosen = m === seq[step];
+      const c = h < nb.h ? 'var(--good)' : h > nb.h ? 'var(--bad)' : 'var(--neutral)', chosen = m === path[step].m;
       s += `<line x1="${x}" y1="${y}" x2="${px}" y2="${py}" stroke="${c}" stroke-width=".8"/>
-        <circle cx="${px}" cy="${py}" r="${chosen ? 4.5 : 3}" fill="${c}"><title>${name(m)} → h = ${h}</title></circle>`;
+        <circle class="nb" data-m="${m}" cx="${px}" cy="${py}" r="${chosen ? 5 : 4}" fill="${c}"><title>${name(m)} → h = ${h}${chosen ? '' : ' (cliquer pour forcer ce coup)'}</title></circle>`;
     });
     return s;
   }
@@ -289,9 +337,9 @@
     return s + '</svg>';
   }
   const mean = h => h.reduce((s, v, d) => s + v * d, 0) / h.reduce((s, v) => s + v, 0);
-  function histos(ka, kb, a, b, color, la, lb) {
+  function histos(ka, kb, a, b, color) {
     const cap = (k, d, l) => `${l} : P(<i>d</i> = ${d}) = ${pct(tables.hist[k][d] / SIZE[k])}, E[<i>d</i>] = ${mean(tables.hist[k]).toLocaleString('fr-FR', { maximumFractionDigits: 2 })}`;
-    return `<div class="histos"><div>${histo(tables.hist[ka], a, color)}${cap(ka, a, la)}</div><div>${histo(tables.hist[kb], b, color)}${cap(kb, b, lb)}</div></div>`;
+    return `<div class="histos"><div>${histo(tables.hist[ka], a, color)}${cap(ka, a, 'Γ<sub>A</sub>')}</div><div>${histo(tables.hist[kb], b, color)}${cap(kb, b, 'Γ<sub>B</sub>')}</div></div>`;
   }
 
   const meter = rows => `<table class="meter">${rows.map(([label, before, after, total, goodIsLow]) => {
@@ -299,100 +347,166 @@
     return `<tr><td>${label}</td><td class="bar"><span><i style="width:${100 * ok / total}%;background:var(--good)"></i></span></td><td>${before} → <b>${after}</b> / ${total}</td></tr>`;
   }).join('')}</table>`;
 
+  // Run of consecutive moves with the same label as path[i]: moves a .. b-1.
+  function segment(i) {
+    const ph = path[i].phase;
+    let a = i, b = i;
+    while (a > 0 && path[a - 1].phase === ph) a--;
+    while (b < path.length && path[b].phase === ph) b++;
+    return { a, b };
+  }
+
+  function detourText(i) {
+    const d = detours[i], delta = d.after - d.before, m = path[i].m;
+    const easy = `<p class="tag p0">Détour imposé — coup ${i + 1} sur ${path.length}</p>
+      <p>${d.orig === undefined ? 'Le cube était résolu' : `Ici, le solveur voulait jouer <b class="mono">${name(d.orig)}</b>`}, mais tu as choisi <b class="mono">${name(m)}</b> : ${say(m)}. Il a recalculé un chemin depuis là : la solution passe de ${d.before} à ${d.after} coups.</p>
+      <p>${delta < 0 ? 'Surprise : ton détour est plus court ! Le solveur ne trouve donc pas toujours le meilleur chemin : il s\'arrête de chercher au bout d\'une demi-seconde.'
+        : delta === 0 ? 'Même longueur : il existe souvent plusieurs meilleurs chemins.'
+        : `Ce détour coûte ${pl(delta, 'coup', 'coups')} de plus.`}</p>`;
+    const deep = `<p class="tag p0">Arête imposée s = ${name(m)}${d.orig === undefined ? '' : ` (IDA* proposait ${name(d.orig)})`}</p>
+      <p>Nouvelle recherche depuis <i>x</i><sub>${i}</sub>·<i>s</i>. Si les deux chemins étaient optimaux, |<i>d</i>(<i>xs</i>) − <i>d</i>(<i>x</i>)| ≤ 1 imposerait Δ ∈ {0, 1, 2}. Ici Δ = ${signed(delta)}${delta < 0 ? ' &lt; 0 : <b>contre-exemple</b>, le chemin initial n\'était pas optimal (budget de temps de 500 ms, pas de garantie de longueur).'
+        : delta > 2 ? ' &gt; 2 : le nouveau chemin n\'est pas optimal.' : ', compatible avec l\'optimalité (sans la prouver).'}</p>
+      ${zone(i) === 2 && zone(i + 1) === 1 ? '<p><i>x</i> ∈ <i>G</i>₁ mais <i>s</i> ∉ <i>S</i>₂, donc <i>xs</i> ∉ <i>G</i>₁ : l\'état ressort dans le graphe de Schreier et le solveur doit refaire une phase 1.</p>' : ''}`;
+    return [easy, deep];
+  }
+
   function drawSteps() {
-    if (!sol) {
-      $('#easy').innerHTML = '<p><i>Clique sur « mélanger », puis sur « résoudre ». Tu pourras ensuite suivre la solution coup par coup.</i></p>';
-      $('#deep').innerHTML = '<p><i>Choisir un sommet x ∈ G₀ (un mélange de 25 coups est une marche aléatoire de 25 pas sur Cay(G₀, S)), puis lancer la recherche.</i></p>';
+    if (!active) {
+      $('#easy').innerHTML = '<p><i>Clique sur « mélanger », puis sur « résoudre ». Tu pourras ensuite suivre la solution coup par coup, et forcer d\'autres coups pour voir ce qui se passe.</i></p>';
+      $('#deep').innerHTML = '<p><i>Choisir un sommet x ∈ G₀ : marche aléatoire de k pas sur Cay(G₀, S) (« mélanger ») ou tirage uniforme (« état aléatoire »), puis lancer la recherche.</i></p>';
       $('#seq').innerHTML = '';
       return;
     }
-    const n1 = sol.phase1.length, n = seq.length, n2 = n - n1;
-    $('#seq').innerHTML = seq.map((m, i) =>
-      `<button class="${i < n1 ? 'p1' : 'p2'} ${i < step ? 'done' : ''} ${i === step ? 'cur' : ''}" data-i="${i}">${name(m)}</button>`).join('');
+    const n = path.length;
+    $('#seq').innerHTML = path.map(({ m, phase }, i) =>
+      `<button class="p${phase} ${i < step ? 'done' : ''} ${i === step ? 'cur' : ''}" data-i="${i}">${name(m)}</button>`).join('');
 
     if (step === n) {
+      const nd = Object.keys(detours).length;
+      const hist = nd ? ` Chemin initial : ${firstLen} coups ; avec ${pl(nd, 'détour', 'détours')} : ${n} (${signed(n - firstLen)}).` : '';
       $('#easy').innerHTML = `<p class="tag ok">Terminé !</p>
-        <p>Le cube est résolu en <b>${n} coups</b> : ${n1} pour la mission 1, ${n2} pour la mission 2.</p>
-        <p>Pour trouver ce chemin, l'ordinateur a examiné ${num(sol.nodes)} positions. Ça paraît beaucoup, mais c'est environ une sur ${sci(G0 / sol.nodes)} de toutes celles qui existent : la boussole lui a évité de se perdre.</p>`;
+        <p>Le cube est résolu en <b>${n} coups</b>.${hist}</p>
+        <p>Pour trouver ${nd ? 'la dernière partie de ' : ''}ce chemin, l'ordinateur a examiné ${num(nodes)} positions. Ça paraît beaucoup, mais c'est environ une sur ${sci(G0 / nodes)} de toutes celles qui existent : la boussole lui a évité de se perdre.</p>`;
       $('#deep').innerHTML = `<p class="tag ok">Arrivée · x<sub>${n}</sub> = e</p>
-        <p>Chemin de longueur <i>n</i> = <i>L</i>₁ + <i>L</i>₂ = ${n1} + ${n2} = ${n} ≤ 12 + 18 = 30 (somme des diamètres des deux graphes). L'optimum global est ≤ 20 ; l'algorithme ne garantit pas l'optimalité, mais énumère plusieurs chemins de phase 1 sous un budget de 500 ms pour réduire <i>L</i>₁ + <i>L</i>₂.</p>
-        <p>IDA* a développé ${num(sol.nodes)} nœuds, soit une fraction ${sci(sol.nodes / G0)} de |<i>G</i>₀|.</p>`;
+        <p>Chemin de longueur <i>n</i> = ${n}.${hist} Sans détour, <i>L</i>₁ + <i>L</i>₂ ≤ 12 + 18 = 30 (somme des diamètres) ; l'optimum global est ≤ 20. L'algorithme ne garantit pas l'optimalité, mais énumère plusieurs chemins de phase 1 sous un budget de 500 ms pour réduire <i>L</i>₁ + <i>L</i>₂.</p>
+        <p>Dernière recherche IDA* : ${num(nodes)} nœuds développés, soit une fraction ${sci(nodes / G0)} de |<i>G</i>₀|.</p>`;
       return;
     }
 
-    const { phase, h, a, b, coords: k, neighbours } = local, deg = neighbours.length;
+    const { phase, h, a, b, coords: k, neighbours } = local, deg = neighbours.length, mv = path[step];
     const down = neighbours.filter(v => v.h < h).length, up = neighbours.filter(v => v.h > h).length, same = deg - down - up;
-    const next = neighbours.find(v => v.m === seq[step]).h;
+    const next = neighbours.find(v => v.m === mv.m).h;
+    // Upper bound from the path itself, this move included: moves until the next G1 state (phase 1) or until solved (phase 2).
+    let j = step + 1;
+    while (phase === 1 && zone(j) === 1) j++;
+    const rem = (phase === 1 ? j : n) - step;
     const s0 = stats(states[step]), s1 = stats(states[step + 1]);
-    const choice = `Parmi les ${deg} mouvements possibles, ${pl(down, 'nous rapproche', 'nous rapprochent')} du but, ${pl(same, 'ne change rien', 'ne changent rien')} et ${pl(up, 'nous en éloigne', 'nous en éloignent')}. Le solveur joue <b class="mono">${name(seq[step])}</b> : ${say(seq[step])}.`
+
+    const choice = `Parmi les ${deg} mouvements possibles, ${pl(down, 'nous rapproche', 'nous rapprochent')} du but, ${pl(same, 'ne change rien', 'ne changent rien')} et ${pl(up, 'nous en éloigne', 'nous en éloignent')}. Le solveur joue <b class="mono">${name(mv.m)}</b> : ${say(mv.m)}.`
       + (next < h ? ' La boussole baisse : on se rapproche.'
         : next === h ? ` La boussole ne bouge pas : ce coup ne rapproche pas tout de suite, il prépare les suivants${down ? '' : ' (ici, aucun coup ne la fait baisser)'}. Comme aux échecs, un coup peut servir à préparer le suivant.`
         : ' La boussole monte : c\'est un détour, mais le solveur sait qu\'il mène au but plus vite.');
-    const edges = `<p>Voisinage : ${deg} arêtes, Δ<i>h</i> ∈ {−1, 0, +1} (<i>h</i> cohérente), effectifs (${down}, ${same}, ${up}). Un coup tiré uniformément fait progresser avec probabilité ${down}/${deg} ≈ ${pct(down / deg)}. Arête choisie : <span class="mono">${name(seq[step])}</span>, <i>h</i> : ${h} → ${next}.`
-      + (next >= h ? ` Ici Δ<i>h</i> ≥ 0 alors que le nombre de coups restants sur le chemin baisse de 1 : <i>h</i> n'est qu'une borne inférieure, parfois lâche, et IDA* accepte toute arête qui garde <i>g</i> + 1 + <i>h</i>′ ≤ <i>L</i>.` : '') + '</p>';
+    const edges = `<p>Voisinage : ${deg} arêtes, Δ<i>h</i> ∈ {−1, 0, +1} (<i>h</i> cohérente), effectifs (${down}, ${same}, ${up}). Un coup tiré uniformément fait progresser avec probabilité ${down}/${deg} ≈ ${pct(down / deg)}. Arête ${mv.phase ? 'choisie' : 'imposée'} : <span class="mono">${name(mv.m)}</span>, <i>h</i> : ${h} → ${next}.`
+      + (mv.phase && next >= h ? ' Ici Δ<i>h</i> ≥ 0 alors que le nombre de coups restants sur le chemin baisse de 1 : <i>h</i> n\'est qu\'une borne inférieure, parfois lâche, et IDA* accepte toute arête qui garde <i>g</i> + 1 + <i>h</i>′ ≤ <i>L</i>.' : '') + '</p>';
+    let bound = '';
+    if (mv.phase) {
+      const sg = segment(step);
+      bound = `<p>Borne IDA* : <i>f</i> = <i>g</i> + <i>h</i> = ${step - sg.a} + ${h} = ${step - sg.a + h} ≤ <i>L</i> = ${sg.b - sg.a}.</p>`;
+    }
+    const [dEasy, dDeep] = mv.phase ? ['', ''] : detourText(step);
 
     if (phase === 1) {
-      $('#easy').innerHTML = `<p class="tag p1">Mission 1 · mettre les pièces dans le bon sens — coup ${step + 1} sur ${n}</p>
-        <p>${choice}</p>
+      $('#easy').innerHTML = (dEasy || `<p class="tag p1">Mission 1 · mettre les pièces dans le bon sens — coup ${step + 1} sur ${n}</p><p>${choice}</p>`) + `
         <p>Ce que ça change :</p>
         ${meter([['coins tordus', s0.twisted, s1.twisted, 8, true], ['arêtes retournées', s0.flipped, s1.flipped, 12, true], ['arêtes du milieu égarées', s0.lost, s1.lost, 4, true]])}
-        <p>La boussole indique : encore <b>au moins ${next} coup${next > 1 ? 's' : ''}</b> après celui-ci pour finir la mission (en réalité ${n1 - step - 1}). Les couleurs à leur place passent de ${s0.stickers} à ${s1.stickers} sur 54 : pas d'inquiétude si le cube a l'air plus mélangé, cette mission ne regarde pas encore les couleurs.</p>`;
-      $('#deep').innerHTML = `<p class="tag p1">Phase 1 · graphe de Schreier Sch(G₀, G₁, S) — pas ${step + 1}/${n1}</p>
+        <p>La boussole indique : encore <b>au moins ${next} coup${next > 1 ? 's' : ''}</b> après celui-ci pour finir la mission 1 (sur ce chemin : ${rem - 1}). Les couleurs à leur place passent de ${s0.stickers} à ${s1.stickers} sur 54 : pas d'inquiétude si le cube a l'air plus mélangé, cette mission ne regarde pas encore les couleurs.</p>`;
+      $('#deep').innerHTML = (dDeep || `<p class="tag p1">Phase 1 · graphe de Schreier Sch(G₀, G₁, S)</p>`) + `
         <p>Sommet <i>x</i><sub>${step}</sub>, classe <i>G</i>₁<i>x</i> codée par (<i>co</i>, <i>eo</i>, <i>e</i>) = (${k.co}, ${k.eo}, ${k.sl}) ∈ ℤ₃⁷ × ℤ₂¹¹ × ⟦0, 494⟧.</p>
-        <p>Distances exactes (BFS) dans les projections : <i>d<sub>A</sub></i> = ${a} dans Γ<sub>A</sub> = CO × tranche (${num(SIZE.p1a)} sommets), <i>d<sub>B</sub></i> = ${b} dans Γ<sub>B</sub> = EO × tranche (${num(SIZE.p1b)}). D'où <i>h</i> = max = ${h} ≤ <i>d</i>(<i>G</i>₁<i>x</i>, <i>G</i>₁) ≤ ${n1 - step}.</p>
-        <p>Borne IDA* : <i>f</i> = <i>g</i> + <i>h</i> = ${step} + ${h} = ${step + h} ≤ <i>L</i>₁ = ${n1}.</p>
-        ${edges}
-        ${histos('p1a', 'p1b', a, b, 'var(--p1)', 'Γ<sub>A</sub>', 'Γ<sub>B</sub>')}`;
+        <p>Distances exactes (BFS) dans les projections : <i>d<sub>A</sub></i> = ${a} dans Γ<sub>A</sub> = CO × tranche (${num(SIZE.p1a)} sommets), <i>d<sub>B</sub></i> = ${b} dans Γ<sub>B</sub> = EO × tranche (${num(SIZE.p1b)}). D'où <i>h</i> = max = ${h} ≤ <i>d</i>(<i>G</i>₁<i>x</i>, <i>G</i>₁) ≤ ${rem}.</p>
+        ${bound}${edges}
+        ${histos('p1a', 'p1b', a, b, 'var(--p1)')}`;
     } else {
-      const j = step - n1, c = states[step];
-      $('#easy').innerHTML = `<p class="tag p2">Mission 2 · remettre chaque pièce à sa place — coup ${step + 1} sur ${n}</p>
-        <p>Toutes les pièces sont dans le bon sens. On n'utilise plus que 10 mouvements (tourner le dessus ou le dessous, ou des demi-tours sur les côtés) : ils ne peuvent plus retourner une pièce.</p>
-        <p>${choice}</p>
+      const c = states[step];
+      $('#easy').innerHTML = (dEasy || `<p class="tag p2">Mission 2 · remettre chaque pièce à sa place — coup ${step + 1} sur ${n}</p>
+        <p>Toutes les pièces sont dans le bon sens. On n'utilise plus que 10 mouvements (tourner le dessus ou le dessous, ou des demi-tours sur les côtés) : ils ne peuvent plus retourner une pièce.</p><p>${choice}</p>`) + `
         ${meter([['coins à leur place', s0.corners, s1.corners, 8, false], ['arêtes à leur place', s0.edges, s1.edges, 12, false], ['couleurs à leur place', s0.stickers, s1.stickers, 54, false]])}
-        <p>La boussole indique : encore <b>au moins ${next} coup${next > 1 ? 's' : ''}</b> après celui-ci (en réalité ${n - step - 1}).</p>`;
-      $('#deep').innerHTML = `<p class="tag p2">Phase 2 · graphe de Cayley Cay(G₁, S₂), |S₂| = 10 — pas ${j + 1}/${n2}</p>
+        <p>La boussole indique : encore <b>au moins ${next} coup${next > 1 ? 's' : ''}</b> après celui-ci (sur ce chemin : ${rem - 1}).</p>`;
+      $('#deep').innerHTML = (dDeep || `<p class="tag p2">Phase 2 · graphe de Cayley Cay(G₁, S₂), |S₂| = 10</p>`) + `
         <p>Sommet <i>x</i><sub>${step}</sub> ∈ <i>G</i>₁, codé par les rangs de Lehmer (σ<sub>c</sub>, σ<sub>e</sub>, σ<sub>t</sub>) = (${k.cp}, ${k.ud}, ${k.sp}) ∈ 𝔖₈ × 𝔖₈ × 𝔖₄. Invariant de parité : sgn σ<sub>c</sub> = ${sgn(c.cp) > 0 ? '+1' : '−1'} = sgn(σ<sub>e</sub>)·sgn(σ<sub>t</sub>), d'où |<i>G</i>₁| = 8!·8!·4!/2.</p>
-        <p>Distances exactes (BFS) : <i>d<sub>A</sub></i> = ${a} dans Γ<sub>A</sub> = 𝔖₈ (coins) × 𝔖₄ (tranche), <i>d<sub>B</sub></i> = ${b} dans Γ<sub>B</sub> = 𝔖₈ (arêtes U/D) × 𝔖₄ (${num(SIZE.p2a)} sommets chacun). D'où <i>h</i> = ${h} ≤ <i>d</i>(<i>x</i>, <i>e</i>) ≤ ${n - step}.</p>
-        <p>Borne IDA* : <i>f</i> = <i>g</i> + <i>h</i> = ${j} + ${h} = ${j + h} ≤ <i>L</i>₂ = ${n2}.</p>
-        ${edges}
-        ${histos('p2a', 'p2b', a, b, 'var(--p2)', 'Γ<sub>A</sub>', 'Γ<sub>B</sub>')}`;
+        <p>Distances exactes (BFS) : <i>d<sub>A</sub></i> = ${a} dans Γ<sub>A</sub> = 𝔖₈ (coins) × 𝔖₄ (tranche), <i>d<sub>B</sub></i> = ${b} dans Γ<sub>B</sub> = 𝔖₈ (arêtes U/D) × 𝔖₄ (${num(SIZE.p2a)} sommets chacun). D'où <i>h</i> = ${h} ≤ <i>d</i>(<i>x</i>, <i>e</i>) ≤ ${rem}.</p>
+        ${bound}${edges}
+        ${histos('p2a', 'p2b', a, b, 'var(--p2)')}`;
     }
   }
 
   function render() {
     drawNet(); drawGraph(); drawSteps();
-    for (const id of ['first', 'prev', 'next', 'last', 'play']) $('#' + id).disabled = !sol;
+    for (const id of ['first', 'prev', 'next', 'last', 'play']) $('#' + id).disabled = !active;
   }
 
-  function setCube(c, msg) { stop(); cube = c; sol = null; seq = []; states = []; step = 0; if (msg !== undefined) $('#status').textContent = msg; render(); }
-  function go(i) { if (sol) { step = Math.max(0, Math.min(seq.length, i)); render(); } }
+  function solveFrom(c) {
+    const r = Cube.solve(c, 500);
+    nodes = r.nodes;
+    return r.phase1.map(m => ({ m, phase: 1 })).concat(r.phase2.map(m => ({ m, phase: 2 })));
+  }
+  function rebuild(from) { // recompute states after index `from`
+    states = states.slice(0, from + 1);
+    for (let i = from; i < path.length; i++) states.push(Cube.apply(states[i], [path[i].m]));
+  }
+  function setCube(c, msg) {
+    stop(); cube = c; active = false; path = []; states = []; step = 0; detours = {};
+    if (msg !== undefined) $('#status').textContent = msg;
+    render();
+  }
+  function detour(m) {
+    stop();
+    const i = step, orig = path[i]?.m, before = path.length;
+    path = path.slice(0, i).concat([{ m, phase: 0 }], solveFrom(Cube.apply(states[i], [m])));
+    rebuild(i);
+    for (const k in detours) if (+k >= i) delete detours[k];
+    detours[i] = { orig, before, after: path.length };
+    $('#status').textContent = `Détour au coup ${i + 1} : ${name(m)}${orig === undefined ? '' : ` au lieu de ${name(orig)}`}. Nouveau chemin : ${path.length} coups (avant : ${before}, Δ = ${signed(path.length - before)}).`;
+    render();
+  }
+  function go(i) { if (active) { step = Math.max(0, Math.min(path.length, i)); render(); } }
   function stop() { clearInterval(timer); timer = null; $('#play').textContent = 'lecture'; }
 
   $('#pad').innerHTML = Cube.MOVE_NAMES.map((_, m) => `<button data-m="${m}">${name(m)}</button>`).join('');
-  $('#pad').onclick = e => { const m = e.target.closest('button')?.dataset.m; if (m) setCube(Cube.apply(current(), [+m])); };
-  $('#scramble').onclick = () => { const s = Cube.scramble(25); setCube(Cube.apply(Cube.solved(), s), 'Mélange : ' + s.map(name).join(' ')); };
+  $('#pad').onclick = e => {
+    const m = e.target.closest('button')?.dataset.m;
+    if (m === undefined) return;
+    if (active) detour(+m); else setCube(Cube.apply(cube, [+m]));
+  };
+  $('#scramble').onclick = () => {
+    const k = Math.max(1, Math.min(200, Math.round(+$('#len').value) || 25)), s = Cube.scramble(k);
+    $('#len').value = k;
+    setCube(Cube.apply(Cube.solved(), s), `Mélange de ${k} coups : ${s.map(name).join(' ')}`);
+  };
+  $('#random').onclick = () => setCube(Cube.randomState(), 'État tiré uniformément parmi les 4,3·10¹⁹ positions (méthode des compétitions WCA).');
   $('#reset').onclick = () => setCube(Cube.solved(), '');
   $('#solve').onclick = () => {
     const c = current(), t = performance.now();
-    const res = Cube.solve(c, 500);
-    setCube(c);
-    sol = res; seq = res.phase1.concat(res.phase2);
-    states = [c]; seq.forEach(m => states.push(Cube.apply(states[states.length - 1], [m])));
-    $('#status').textContent = seq.length ? `Solution en ${seq.length} coups, trouvée en ${Math.round(performance.now() - t)} ms.` : 'Le cube est déjà résolu.';
+    stop(); cube = c; active = true; step = 0; detours = {};
+    path = solveFrom(c); states = [c]; rebuild(0); firstLen = path.length;
+    $('#status').textContent = path.length ? `Solution en ${path.length} coups, trouvée en ${Math.round(performance.now() - t)} ms.` : 'Le cube est déjà résolu.';
     render();
   };
   $('#first').onclick = () => { stop(); go(0); };
   $('#prev').onclick = () => { stop(); go(step - 1); };
   $('#next').onclick = () => { stop(); go(step + 1); };
-  $('#last').onclick = () => { stop(); go(seq.length); };
+  $('#last').onclick = () => { stop(); go(path.length); };
   $('#play').onclick = () => {
     if (timer) return stop();
-    if (step === seq.length) go(0);
+    if (step === path.length) go(0);
     $('#play').textContent = 'pause';
-    timer = setInterval(() => { go(step + 1); if (step === seq.length) stop(); }, 1500);
+    timer = setInterval(() => { go(step + 1); if (step === path.length) stop(); }, 1500);
   };
-  $('#graph').onclick = e => { const i = e.target.dataset.i; if (i) { stop(); go(+i); } };
-  $('#seq').onclick = e => { const i = e.target.closest('button')?.dataset.i; if (i) { stop(); go(+i); } };
+  $('#graph').onclick = e => {
+    const { i, m } = e.target.dataset;
+    if (m !== undefined) detour(+m);
+    else if (i !== undefined) { stop(); go(+i); }
+  };
+  $('#seq').onclick = e => { const i = e.target.closest('button')?.dataset.i; if (i !== undefined) { stop(); go(+i); } };
 
   render();
   setTimeout(() => { // let the page paint before the ~1 s table build
