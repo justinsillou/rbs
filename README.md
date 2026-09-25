@@ -8,7 +8,15 @@ Solveur de Rubik's Cube 3×3 visuel, basé sur la théorie des graphes : la rés
 
 La page montre le cube (patron), le chemin sous forme de spirale G₀ → G₁ → résolu, et pour chaque étape le **graphe local** : les voisins de l'état courant, colorés selon que le mouvement rapproche ou éloigne de la cible.
 
-## Lancer
+Chaque étape est expliquée à deux niveaux, en parallèle : **En clair** (ce qui change sur le cube, pour tout le monde) et **En détail** (graphe de Schreier / Cayley, coordonnées, bornes IDA*, distributions de distances et probabilités).
+
+**Démo :** https://justinsillou.github.io/rbs/
+
+## Déployer (GitHub Pages)
+
+Site 100 % statique, rien à compiler. Sur GitHub : *Settings → Pages → Source : Deploy from a branch → `main` / `(root)`*. La page est publiée à l'adresse ci-dessus ; pour un portfolio, un lien ou une `<iframe src="https://justinsillou.github.io/rbs/">` suffit.
+
+## Lancer en local
 
 Pas de build, pas de dépendance. Ouvrir `index.html` dans un navigateur, ou le servir :
 

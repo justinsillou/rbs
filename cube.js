@@ -136,6 +136,9 @@
       p2a: pruneTable(40320, cpM, 24, spM, P2),
       p2b: pruneTable(40320, udM, 24, spM, P2),
     };
+    // Distance distributions of each projected graph: hist[d] = number of vertices at distance d.
+    const hist = t => t.reduce((h, v) => (h[v] = (h[v] || 0) + 1, h), []);
+    T.hist = { p1a: hist(T.p1a), p1b: hist(T.p1b), p2a: hist(T.p2a), p2b: hist(T.p2b) };
     T.ms = Date.now() - t0;
     return T;
   }
@@ -148,9 +151,10 @@
   function solve(cube, budgetMs = 500) {
     init();
     const t0 = Date.now(), p1 = [];
-    let best = null;
+    let best = null, nodes = 0;
 
     function dfs2(cp, ud, sp, d, last, path) {
+      nodes++;
       if (d === 0) return cp === 0 && ud === 0 && sp === 0;
       if (h2(cp, ud, sp) > d) return false;
       for (const m of P2) {
@@ -171,6 +175,7 @@
     }
 
     function dfs1(co, eo, sl, d, last) { // returns true = stop searching
+      nodes++;
       if (d === 0) {
         if (co || eo || sl) return false;
         // Ending with a G1 move means a shorter phase 1 was already tried.
@@ -196,14 +201,22 @@
       if (best && d >= best.length) break;
       if (dfs1(co, eo, sl, d, -1)) break;
     }
+    if (best) best.nodes = nodes;
     return best;
   }
 
-  // Local graph around a state: its lower bound h and the h of each neighbour, in the given phase's graph.
+  // Local graph around a state in the given phase's graph: coordinates, the two projected
+  // distances a, b (h = max), and the h of each neighbour.
   function neighbourhood(c, phase) {
     init();
     const h = phase === 1 ? x => h1(coC(x), eoC(x), sliceC(x)) : x => h2(cpC(x), udC(x), spC(x));
-    return { h: h(c), neighbours: (phase === 1 ? ALL : P2).map(m => ({ m, h: h(mul(c, MOVES[m])) })) };
+    const k = phase === 1
+      ? { co: coC(c), eo: eoC(c), sl: sliceC(c) }
+      : { cp: cpC(c), ud: udC(c), sp: spC(c) };
+    const [a, b] = phase === 1
+      ? [T.p1a[k.co * 495 + k.sl], T.p1b[k.eo * 495 + k.sl]]
+      : [T.p2a[k.cp * 24 + k.sp], T.p2b[k.ud * 24 + k.sp]];
+    return { h: h(c), a, b, coords: k, neighbours: (phase === 1 ? ALL : P2).map(m => ({ m, h: h(mul(c, MOVES[m])) })) };
   }
 
   const api = { MOVE_NAMES, solved, mul, apply, parse, format, isSolved, scramble, facelets, init, solve, neighbourhood };

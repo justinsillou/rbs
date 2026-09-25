@@ -2,6 +2,15 @@
 
 Format : [Keep a Changelog](https://keepachangelog.com/fr/1.1.0/), versions [SemVer](https://semver.org/lang/fr/).
 
+## [0.3.0] - 2026-09-25
+
+### Ajouté
+- Vue en deux colonnes parallèles : « En clair » (enfant) et « En détail » (doctorant), à chaque étape et dans la théorie.
+- Par étape, en clair : coup décrit en mots, effet sur le cube (coins tordus, arêtes retournées, pièces à leur place, couleurs à leur place), boussole *h*, explication des coups « neutres ».
+- Par étape, en détail : coordonnées du sommet, distances projetées *d*<sub>A</sub>, *d*<sub>B</sub>, borne IDA* *f* = *g* + *h*, statistiques du voisinage et probabilité de progrès, histogrammes des distances des graphes projetés (P(*d*), E[*d*]), invariant de parité en phase 2.
+- Nombre de nœuds explorés par IDA* (`solve().nodes`).
+- Publication GitHub Pages documentée dans le README.
+
 ## [0.2.0] - 2026-09-25
 
 ### Modifié

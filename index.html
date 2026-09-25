@@ -6,7 +6,7 @@
 <title>Rubik's Graph Solver</title>
 <style>
   :root {
-    --paper: #fbf8f1; --ink: #23201c; --soft: #6f675c; --faint: #d8d0c2;
+    --paper: #fbf8f1; --ink: #23201c; --soft: #6f675c; --faint: #ddd5c7;
     --p1: #b0601e; --p2: #2f5288; --good: #4f7d3a; --bad: #a8412f; --neutral: #a59c8e;
     --serif: "Iowan Old Style", "Palatino Linotype", Palatino, "Book Antiqua", Georgia, serif;
     --mono: "SF Mono", Consolas, "Liberation Mono", monospace;
@@ -18,132 +18,196 @@
     }
   }
   * { box-sizing: border-box; }
-  body { margin: 0; background: var(--paper); color: var(--ink); font: 18px/1.6 var(--serif); }
-  article { max-width: 720px; margin: 0 auto; padding: 56px 16px 80px; }
-  h1 { font-size: 36px; font-weight: normal; line-height: 1.2; margin: 0 0 8px; }
-  h2 { font-size: 22px; font-weight: normal; font-style: italic; margin: 48px 0 8px; }
-  .lede { color: var(--soft); font-style: italic; margin: 0 0 32px; }
-  p { margin: 0 0 16px; hyphens: auto; }
+  body { margin: 0; background: var(--paper); color: var(--ink); font: 17px/1.6 var(--serif); }
+  main { max-width: 1180px; margin: 0 auto; padding: 48px 24px 80px; }
+  h1 { font-size: 34px; font-weight: normal; line-height: 1.2; margin: 0 0 8px; }
+  h3 { font-size: 19px; font-weight: normal; font-style: italic; margin: 0 0 6px; }
+  .lede { color: var(--soft); font-style: italic; margin: 0 0 24px; max-width: 760px; }
+  p { margin: 0 0 12px; }
   a { color: inherit; text-decoration-color: var(--faint); text-underline-offset: 3px; }
-  a:hover { text-decoration-color: var(--ink); }
-  sup a { text-decoration: none; color: var(--soft); font-size: 13px; }
-  code, .mono { font-family: var(--mono); font-size: 15px; }
-  hr { border: 0; border-top: 1px solid var(--faint); margin: 48px 0 24px; }
-
-  figure { margin: 32px -120px; }
-  .fig { display: grid; grid-template-columns: 300px 1fr; gap: 32px; align-items: start; }
-  figcaption { color: var(--soft); font-size: 15px; margin-top: 12px; }
-  figcaption b { color: var(--ink); font-weight: normal; font-variant: small-caps; letter-spacing: .03em; }
+  sup a { text-decoration: none; color: var(--soft); font-size: 12px; }
+  .mono, code { font-family: var(--mono); font-size: 14px; }
   svg { display: block; width: 100%; height: auto; }
-  #net { max-width: 360px; }
 
-  .controls { margin: 16px 0 8px; font-size: 16px; }
+  /* figure: cube | graph */
+  .fig { display: grid; grid-template-columns: 330px 1fr; gap: 40px; align-items: start; }
+  #net { max-width: 330px; }
+  .controls { margin: 14px 0 6px; }
   .controls button, .pad button {
-    font: inherit; background: none; border: 0; padding: 0; margin-right: 14px; color: var(--ink);
-    cursor: pointer; text-decoration: underline; text-decoration-color: var(--faint); text-underline-offset: 3px;
+    font: inherit; background: none; border: 0; padding: 0; margin-right: 14px; color: var(--ink); cursor: pointer;
+    text-decoration: underline; text-decoration-color: var(--faint); text-underline-offset: 3px;
   }
   .controls button:hover:not(:disabled), .pad button:hover { text-decoration-color: var(--ink); }
   .controls button:disabled { color: var(--faint); cursor: default; text-decoration: none; }
   .pad { font-family: var(--mono); font-size: 14px; line-height: 1.9; }
   .pad button { margin-right: 8px; }
-  .status { font-size: 14px; color: var(--soft); min-height: 3em; margin-top: 8px; }
-
-  .info { margin-top: 12px; font-size: 16px; min-height: 5em; }
-  .seq { font-family: var(--mono); font-size: 14px; line-height: 2; margin-top: 8px; }
+  .status { font-size: 14px; color: var(--soft); margin-top: 8px; }
+  .key { font-size: 14px; color: var(--soft); }
+  .key i { display: inline-block; width: 18px; border-top: 2px solid; vertical-align: 4px; margin: 0 4px 0 10px; }
+  .key i.d { width: 7px; height: 7px; border: 0; border-radius: 50%; vertical-align: 1px; }
+  .seq { font-family: var(--mono); font-size: 14px; line-height: 2; margin-top: 6px; }
   .seq button { font: inherit; background: none; border: 0; padding: 0 2px; margin: 0 2px; cursor: pointer; border-bottom: 2px solid transparent; }
   .seq .p1 { color: var(--p1); } .seq .p2 { color: var(--p2); }
-  .seq .done { opacity: .45; }
-  .seq .cur { border-bottom-color: currentColor; }
-  .key { font-size: 14px; color: var(--soft); }
-  .key i { display: inline-block; width: 18px; height: 0; border-top: 2px solid; vertical-align: 4px; margin: 0 4px 0 10px; }
-  .key i.d { width: 7px; height: 7px; border: 0; border-radius: 50%; vertical-align: 1px; }
-
+  .seq .done { opacity: .45; } .seq .cur { border-bottom-color: currentColor; }
   #graph text { fill: var(--soft); font: italic 14px var(--serif); }
-  #graph .lbl { font: 11px var(--mono); font-style: normal; }
+  #graph .lbl { font: 11px var(--mono); }
   #graph .node { cursor: pointer; }
-  ol.refs { font-size: 15px; color: var(--soft); padding-left: 22px; }
 
-  @media (max-width: 980px) { figure { margin: 32px 0; } }
-  @media (max-width: 640px) { .fig { grid-template-columns: 1fr; } h1 { font-size: 30px; } }
+  /* two parallel reading levels */
+  .duo { display: grid; grid-template-columns: 1fr 1fr; column-gap: 56px; margin-top: 32px; }
+  .duo > * { padding: 18px 0; border-top: 1px solid var(--faint); }
+  .duo > .head { border-top: 2px solid var(--ink); padding-bottom: 4px; }
+  .head b { font-size: 21px; font-weight: normal; }
+  .head span { display: block; color: var(--soft); font-size: 14px; font-style: italic; }
+  .deep { font-size: 15.5px; }
+  .tag { font-variant: small-caps; letter-spacing: .04em; margin-bottom: 8px; }
+  .tag.p1 { color: var(--p1); } .tag.p2 { color: var(--p2); } .tag.ok { color: var(--good); }
+  table.meter { border-collapse: collapse; width: 100%; font-size: 15px; margin: 6px 0 12px; }
+  table.meter td { padding: 3px 8px 3px 0; white-space: nowrap; }
+  table.meter td.bar { width: 45%; }
+  .bar span { display: block; height: 8px; background: var(--faint); }
+  .bar span i { display: block; height: 100%; }
+  .histos { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin-top: 10px; font-size: 13px; color: var(--soft); }
+  .histos text { fill: var(--soft); font: 9px var(--mono); }
+  ol.refs { font-size: 14px; color: var(--soft); padding-left: 22px; margin-top: 40px; border-top: 1px solid var(--faint); padding-top: 16px; }
 </style>
 </head>
 <body>
-<article>
-  <h1>Résoudre un Rubik's Cube<br>en marchant dans un graphe</h1>
-  <p class="lede">Un petit solveur 3×3 qui voit le cube comme un graphe géant, et le résout en traversant deux graphes emboîtés l'un dans l'autre.</p>
+<main>
+  <h1>Résoudre un Rubik's Cube en marchant dans un graphe</h1>
+  <p class="lede">Chaque mélange du cube est un point, chaque mouvement un chemin vers un point voisin. Ce solveur cherche le trajet vers le cube résolu en traversant deux graphes emboîtés. Chaque étape est expliquée deux fois : en clair à gauche, avec les mathématiques à droite.</p>
 
-  <p>Chaque configuration du cube est un point ; chaque quart de tour relie deux points. Résoudre le cube revient alors à chercher un chemin, le plus court possible, entre l'état mélangé et l'état résolu. Le problème : ce graphe compte environ 4,3·10¹⁹ sommets. Impossible de le parcourir. L'astuce, due à Herbert Kociemba, est de passer par une étape intermédiaire.</p>
-
-  <figure>
-    <div class="fig">
-      <div>
-        <svg id="net" viewBox="-.1 -.1 12.2 9.2" role="img" aria-label="Patron du cube"></svg>
-        <div class="controls">
-          <button id="scramble">mélanger</button>
-          <button id="solve" disabled>résoudre</button>
-          <button id="reset">remettre à zéro</button>
-        </div>
-        <div class="pad" id="pad" aria-label="Mouvements"></div>
-        <div class="status" id="status">Construction des tables de distances…</div>
+  <div class="fig">
+    <div>
+      <svg id="net" viewBox="-.1 -.1 12.2 9.2" role="img" aria-label="Patron du cube"></svg>
+      <div class="controls">
+        <button id="scramble">mélanger</button>
+        <button id="solve" disabled>résoudre</button>
+        <button id="reset">remettre à zéro</button>
       </div>
-      <div>
-        <svg id="graph" viewBox="0 0 640 640" role="img" aria-label="Chemin de résolution dans les graphes imbriqués"></svg>
-        <div class="controls">
-          <button id="first">« début</button>
-          <button id="prev">‹ préc.</button>
-          <button id="play">lecture</button>
-          <button id="next">suiv. ›</button>
-          <button id="last">fin »</button>
-        </div>
-        <div class="key">
-          <i style="color:var(--p1)"></i>phase 1
-          <i style="color:var(--p2)"></i>phase 2 ·
-          voisins où <i class="d" style="background:var(--good)"></i>h baisse
-          <i class="d" style="background:var(--neutral)"></i>stagne
-          <i class="d" style="background:var(--bad)"></i>monte
-        </div>
-      </div>
+      <div class="pad" id="pad" aria-label="Mouvements"></div>
+      <div class="status" id="status">Construction des tables de distances…</div>
     </div>
-    <figcaption><b>Fig. 1</b> — À gauche, le cube déplié. À droite, le chemin trouvé par le solveur : il part du bord, rejoint le sous-groupe G₁ (cercle intérieur), puis descend jusqu'à l'état résolu au centre. Autour de l'étape courante, ses voisins immédiats dans le graphe.</figcaption>
-    <div class="info" id="info"></div>
-    <div class="seq" id="seq"></div>
-  </figure>
+    <div>
+      <svg id="graph" viewBox="0 0 640 640" role="img" aria-label="Chemin de résolution dans les graphes imbriqués"></svg>
+      <div class="controls">
+        <button id="first">« début</button>
+        <button id="prev">‹ préc.</button>
+        <button id="play">lecture</button>
+        <button id="next">suiv. ›</button>
+        <button id="last">fin »</button>
+      </div>
+      <div class="key">
+        <i style="color:var(--p1)"></i>phase 1
+        <i style="color:var(--p2)"></i>phase 2 ·
+        voisins où <i class="d" style="background:var(--good)"></i>h baisse
+        <i class="d" style="background:var(--neutral)"></i>stagne
+        <i class="d" style="background:var(--bad)"></i>monte
+      </div>
+      <div class="seq" id="seq"></div>
+    </div>
+  </div>
 
-  <h2>Le cube est un groupe</h2>
-  <p>Les six rotations de faces U, D, L, R, F, B engendrent un groupe : on peut les composer, les inverser, et toute suite de mouvements est encore un élément du groupe. Ce groupe, noté ici G₀, a exactement 43 252 003 274 489 856 000 éléments, soit 2²⁷·3¹⁴·5³·7²·11.</p>
-  <p>Trois quantités ne changent jamais, quel que soit le mouvement : la torsion totale des coins (modulo 3), le retournement total des arêtes (modulo 2), et le fait que coins et arêtes aient la même parité de permutation. Ce sont des invariants, au sens où la physique parle de quantités conservées. Conséquence amusante : un cube démonté puis remonté au hasard n'a qu'une chance sur 12 d'être soluble.</p>
+  <div class="duo">
+    <div class="head"><b>En clair</b><span>pour tout le monde</span></div>
+    <div class="head"><b>En détail</b><span>théorie des graphes, algèbre, probabilités</span></div>
 
-  <h2>Un graphe trop grand</h2>
-  <p>Le graphe de Cayley du groupe relie chaque état à ses 18 voisins (6 faces × quart de tour, demi-tour, quart inverse). On sait depuis 2010 que son diamètre vaut 20 : n'importe quel mélange se résout en 20 coups au plus<sup><a href="#r2">[2]</a></sup>. La preuve a demandé environ 35 années de calcul processeur. Pour un solveur qui tourne dans un navigateur, il faut être plus malin.</p>
+    <div id="easy"></div>
+    <div id="deep" class="deep"></div>
 
-  <h2>Deux graphes emboîtés</h2>
-  <p>On choisit un sous-groupe G₁ = ⟨U, D, R2, F2, L2, B2⟩ : les états où coins et arêtes sont bien orientés et où les quatre arêtes de la tranche du milieu sont dans leur tranche. Dans G₁, seuls ces 10 mouvements sont permis, et ils ne cassent jamais ces propriétés.<sup><a href="#r1">[1]</a></sup></p>
-  <p>La résolution se fait alors en deux temps. En <span style="color:var(--p1)">phase 1</span>, on cherche un chemin vers G₁ dans le graphe quotient G₀/G₁, dont les sommets sont les classes d'états (2,2·10⁹ classes, diamètre 12). En <span style="color:var(--p2)">phase 2</span>, on cherche un chemin vers l'état résolu dans le graphe de G₁ lui-même (1,95·10¹⁰ sommets, diamètre 18). Thistlethwaite, en 1981, empilait quatre niveaux ; Kociemba, en 1992, n'en garde que deux.</p>
+    <div>
+      <h3>Combien de mélanges ?</h3>
+      <p>Un Rubik's Cube peut être mélangé de 43 252 003 274 489 856 000 façons. En regardant une position par seconde, il faudrait environ 1 400 milliards d'années pour toutes les voir : cent fois l'âge de l'univers. Et pourtant, chacune se résout en 20 coups au plus.</p>
+      <p>Autre curiosité : si on démonte le cube et qu'on le remonte au hasard, il n'y a qu'une chance sur 12 qu'il soit encore faisable.</p>
+    </div>
+    <div class="deep">
+      <h3>Le groupe du cube</h3>
+      <p>Les rotations engendrent <i>G</i>₀ = ⟨U, R, F, D, L, B⟩, sous-groupe de 𝔖₄₈ (permutations des 48 facettes mobiles). Un état est un quadruplet (σ<sub>c</sub>, <i>o</i><sub>c</sub>, σ<sub>e</sub>, <i>o</i><sub>e</sub>) ∈ 𝔖₈ × ℤ₃⁸ × 𝔖₁₂ × ℤ₂¹². Le groupe des assemblages (𝔖₈ ⋉ ℤ₃⁸) × (𝔖₁₂ ⋉ ℤ₂¹²) contient <i>G</i>₀ comme sous-groupe d'indice 12, découpé par trois invariants : Σ<i>o</i><sub>c</sub> ≡ 0 (mod 3), Σ<i>o</i><sub>e</sub> ≡ 0 (mod 2), sgn σ<sub>c</sub> = sgn σ<sub>e</sub>.</p>
+      <p>|<i>G</i>₀| = 8!·3⁷·12!·2¹¹ / 2 = 2²⁷·3¹⁴·5³·7²·11. Un remontage uniforme tombe dans <i>G</i>₀ avec probabilité 1/12 ; ces invariants jouent le rôle de quantités conservées (analogue discret du théorème de Noether).</p>
+    </div>
 
-  <h2>Mesurer la distance sans tout explorer</h2>
-  <p>Pour se guider, le solveur a besoin d'estimer la distance restante. On projette chaque graphe sur de petites coordonnées (l'orientation des coins, 3⁷ valeurs ; celle des arêtes, 2¹¹ ; la position de la tranche, C(12,4) = 495…). Ces graphes réduits ne font qu'un million de sommets environ : un parcours en largeur les explore entièrement en une fraction de seconde. La distance dans la projection ne dépasse jamais la vraie distance, c'est donc une borne inférieure fiable, notée <i>h</i>.</p>
-  <p>La recherche elle-même est un IDA* (Korf, 1985) : une exploration en profondeur qu'on relance avec une limite croissante, en abandonnant toute branche où <code>profondeur + h</code> dépasse la limite. C'est ce que montrent les voisins colorés de la figure : le solveur n'a pas besoin de regarder plus loin que les branches encore prometteuses.</p>
+    <div>
+      <h3>Une carte géante</h3>
+      <p>Imagine que chaque mélange soit une ville, et chaque mouvement une route vers une ville voisine. Chaque ville a exactement 18 routes (6 faces, et pour chacune : un quart de tour, un demi-tour, ou un quart de tour dans l'autre sens).</p>
+      <p>Résoudre le cube, c'est trouver le trajet le plus court jusqu'à la ville « résolu ». Le problème : la carte est bien trop grande pour être dessinée en entier.</p>
+    </div>
+    <div class="deep">
+      <h3>Graphe de Cayley</h3>
+      <p>Γ = Cay(<i>G</i>₀, <i>S</i>), |<i>S</i>| = 18, <i>S</i> = <i>S</i>⁻¹ : graphe non orienté, 18-régulier, sommet-transitif. Son diamètre vaut 20 (Rokicki, Kociemba, Davidson, Dethridge, 2010)<sup><a href="#r2">[2]</a></sup> ; la plupart des positions sont à distance 18.</p>
+      <p>Borne inférieure par comptage : en interdisant deux coups sur la même face et en ordonnant les faces opposées (qui commutent), le nombre de séquences canoniques de longueur <i>k</i> croît comme ≈ 18·13,35<sup><i>k</i>−1</sup>. Comme Σ<sub><i>k</i>≤17</sub> reste inférieur à |<i>G</i>₀|, certaines positions exigent au moins 18 coups. Le « superflip » en exige exactement 20 (Reid, 1995).</p>
+    </div>
 
-  <h2>Au-delà du cube</h2>
-  <p>La même algèbre décrit les symétries des cristaux et des molécules en chimie, ou celles des particules élémentaires en physique (le groupe SU(3) des quarks). Côté informatique, la recherche heuristique dans un espace d'états immense est un problème central de l'intelligence artificielle : DeepCubeA (2019) remplace les tables par un réseau de neurones, et des travaux récents exploitent la structure locale du graphe autour de chaque état<sup><a href="#r3">[3]</a></sup>.</p>
+    <div>
+      <h3>Deux missions</h3>
+      <p>Plutôt que de tout faire d'un coup, le solveur découpe le travail en deux. <span style="color:var(--p1)">Mission 1</span> : tourner chaque pièce dans le bon sens, sans s'occuper de sa place, comme on retourne toutes les cartes face visible avant de les trier.</p>
+      <p><span style="color:var(--p2)">Mission 2</span> : ranger les pièces à leur place, avec seulement les mouvements qui ne les retournent plus. Deux petits problèmes au lieu d'un énorme.</p>
+    </div>
+    <div class="deep">
+      <h3>Sous-groupe et graphe de Schreier</h3>
+      <p><i>G</i>₁ = ⟨U, D, R2, F2, L2, B2⟩ est le stabilisateur des orientations et de la tranche E<sup><a href="#r1">[1]</a></sup>. Indice [<i>G</i>₀ : <i>G</i>₁] = 3⁷·2¹¹·C(12,4) = 2 217 093 120 ; un état uniforme est déjà dans <i>G</i>₁ avec probabilité ≈ 4,5·10⁻¹⁰.</p>
+      <p><span style="color:var(--p1)">Phase 1</span> : plus court chemin dans le graphe de Schreier Sch(<i>G</i>₀, <i>G</i>₁, <i>S</i>), dont les sommets sont les classes <i>G</i>₁<i>g</i> (diamètre 12). <span style="color:var(--p2)">Phase 2</span> : plus court chemin dans Cay(<i>G</i>₁, <i>S</i>₂), |<i>S</i>₂| = 10, |<i>G</i>₁| = 8!·8!·4!/2 = 19 508 428 800 (diamètre 18). Toute solution fait donc au plus 30 coups. Thistlethwaite (1981) utilisait une chaîne de quatre sous-groupes, pour au plus 52 coups.</p>
+    </div>
 
-  <hr>
+    <div>
+      <h3>La boussole</h3>
+      <p>Le solveur a une boussole spéciale qui dit « il reste au moins 7 coups ». Elle peut être trop optimiste, mais elle ne ment jamais dans l'autre sens.</p>
+      <p>Pour la fabriquer, l'ordinateur explore d'abord des versions simplifiées du cube (par exemple, en ne regardant que le sens des coins), assez petites pour être parcourues en entier. Ensuite il essaie tous les chemins de 1 coup, puis de 2, puis de 3… en abandonnant tout chemin que la boussole juge trop long.</p>
+    </div>
+    <div class="deep">
+      <h3>Heuristique admissible et IDA*</h3>
+      <p>Une projection π : Γ → Γ′ (ici sur des coordonnées : orientation des coins 3⁷, des arêtes 2¹¹, tranche C(12,4)…) est un morphisme de graphes, donc 1-lipschitzienne : <i>d</i><sub>Γ′</sub>(π<i>x</i>, π<i>e</i>) ≤ <i>d</i><sub>Γ</sub>(<i>x</i>, <i>e</i>). Un BFS exhaustif sur Γ′ (~10⁶ sommets, coût O(|<i>V</i>|·|<i>S</i>|)) donne ces distances exactes. Le maximum de deux heuristiques admissibles reste admissible, et <i>h</i> est cohérente : |<i>h</i>(<i>x</i>) − <i>h</i>(<i>xs</i>)| ≤ 1.</p>
+      <p>IDA* (Korf, 1985) : DFS itératif avec la borne <i>f</i> = <i>g</i> + <i>h</i> ≤ <i>L</i>, mémoire O(<i>L</i>), optimal dans chaque phase. Le coût dépend de la distribution de <i>h</i> (histogrammes ci-dessus) : nombre de nœuds ≈ Σ<sub><i>d</i></sub> <i>N</i>(<i>d</i>)·P(<i>h</i> ≤ <i>L</i> − <i>d</i>) (Korf, Reid, Edelkamp, 2001).</p>
+    </div>
+
+    <div>
+      <h3>Et ailleurs ?</h3>
+      <p>Les mêmes idées servent partout. Un GPS cherche le plus court trajet dans le graphe des routes. Les chimistes utilisent les groupes pour décrire la symétrie des molécules. Les programmes qui jouent aux échecs ou au go explorent eux aussi des graphes géants, guidés par une boussole.</p>
+    </div>
+    <div class="deep">
+      <h3>Liens avec d'autres sciences</h3>
+      <p><b>Physique</b> : groupes de symétrie (cristallographie, SU(3) des quarks), invariants et lois de conservation. <b>Chimie</b> : groupes ponctuels moléculaires. <b>Probabilités</b> : un mélange est une marche aléatoire sur Cay(<i>G</i>₀, <i>S</i>) ; combien de pas faut-il pour que la loi soit proche de l'uniforme ? C'est la question du temps de mélange des chaînes de Markov. <b>IA</b> : A*/IDA*, heuristique apprise par réseau de neurones (DeepCubeA, 2019), convolution sur la structure locale du graphe<sup><a href="#r3">[3]</a></sup>. <b>Informatique</b> : BFS, programmation dynamique, calcul distribué (la preuve du nombre 20 a demandé ~35 années CPU).</p>
+    </div>
+  </div>
+
   <ol class="refs">
     <li id="r1">H. Kociemba, <a href="http://kociemba.org/cube.htm">The two-phase algorithm</a>.</li>
     <li id="r2">T. Rokicki, H. Kociemba, M. Davidson, J. Dethridge, <a href="https://www.cube20.org/">God's Number is 20</a>, 2010. Voir aussi <a href="https://en.wikipedia.org/wiki/Optimal_solutions_for_the_Rubik%27s_Cube">Optimal solutions for the Rubik's Cube</a>.</li>
     <li id="r3"><a href="https://arxiv.org/html/2408.07945v1">Solving a Rubik's Cube Using Its Local Graph Structure</a>, arXiv:2408.07945.</li>
   </ol>
-</article>
+</main>
 
 <script src="cube.js"></script>
 <script>
   const $ = s => document.querySelector(s);
   const STICKER = { U: '#f4f1ea', R: '#b8312f', F: '#2f7d4a', D: '#e9c93c', L: '#d9742b', B: '#2b5ea8' };
   const NET = { U: [3, 0], R: [6, 3], F: [3, 3], D: [3, 6], L: [0, 3], B: [9, 3] };
+  const FACE_FR = { U: 'la face du dessus', D: 'la face du dessous', R: 'la face de droite', L: 'la face de gauche', F: 'la face avant', B: 'la face arrière' };
+  const TURN_FR = { '': "d'un quart de tour, dans le sens des aiguilles d'une montre", '2': "d'un demi-tour", "'": "d'un quart de tour, dans l'autre sens" };
+  const SIZE = { p1a: 1082565, p1b: 1013760, p2a: 967680, p2b: 967680 };
+  const G0 = 43252003274489856000;
   const name = m => Cube.MOVE_NAMES[m].replace("'", '′');
+  const say = m => { const n = Cube.MOVE_NAMES[m]; return `on tourne ${FACE_FR[n[0]]} ${TURN_FR[n.slice(1)]}`; };
+  const num = x => x.toLocaleString('fr-FR');
+  const sci = x => { const [m, e] = x.toExponential(1).split('e'); return `${m.replace('.', ',')}·10<sup>${+e}</sup>`; };
+  const pct = x => (x && x < 1e-3 ? sci(100 * x) : (100 * x).toLocaleString('fr-FR', { maximumFractionDigits: 1 })) + ' %';
+  const pl = (n, one, many) => `${n} ${n > 1 ? many : one}`;
+  const sgn = p => { let s = 1; for (let i = 0; i < p.length; i++) for (let j = i + 1; j < p.length; j++) if (p[i] > p[j]) s = -s; return s; };
 
-  let cube = Cube.solved(), sol = null, seq = [], states = [], step = 0, timer = null;
+  let tables = null, cube = Cube.solved(), sol = null, seq = [], states = [], step = 0, timer = null;
   const current = () => sol ? states[step] : cube;
+
+  // What a child can see on the cube.
+  function stats(c) {
+    const f = Cube.facelets(c);
+    return {
+      twisted: c.co.filter(x => x).length,
+      flipped: c.eo.filter(x => x).length,
+      lost: [8, 9, 10, 11].filter(j => c.ep[j] < 8).length,
+      corners: c.cp.filter((p, i) => p === i && !c.co[i]).length,
+      edges: c.ep.filter((p, i) => p === i && !c.eo[i]).length,
+      stickers: [...f].filter((x, i) => x === f[((i / 9) | 0) * 9 + 4]).length,
+    };
+  }
 
   function drawNet() {
     const f = Cube.facelets(current());
@@ -168,6 +232,7 @@
     });
   }
 
+  let local = null;
   function drawGraph() {
     let s = `<circle cx="${C}" cy="${C}" r="${R0}" fill="none" stroke="var(--faint)" stroke-width="1.5"/>
       <circle cx="${C}" cy="${C}" r="${R1}" fill="none" stroke="var(--faint)" stroke-width="1.5" stroke-dasharray="6 5"/>
@@ -175,6 +240,7 @@
       <text x="${C}" y="${C - R1 + 24}" text-anchor="middle">G₁ = ⟨U, D, R2, F2, L2, B2⟩</text>
       <circle cx="${C}" cy="${C}" r="5" fill="var(--ink)"/>
       <text x="${C}" y="${C + 24}" text-anchor="middle">résolu</text>`;
+    local = null;
     if (sol) {
       const P = layout(), n1 = sol.phase1.length;
       const col = i => i < n1 ? 'var(--p1)' : 'var(--p2)';
@@ -196,7 +262,6 @@
   }
 
   // Local graph: the current state's neighbours, coloured by how the lower bound h changes.
-  let local = null;
   function fan([x, y], [nx, ny]) {
     const phase = step < sol.phase1.length ? 1 : 2, nb = Cube.neighbourhood(states[step], phase), n = nb.neighbours.length;
     local = { phase, ...nb };
@@ -212,26 +277,90 @@
     return s;
   }
 
-  function drawInfo() {
-    if (!sol) { $('#info').innerHTML = '<i>Mélangez le cube, puis demandez au solveur de le résoudre.</i>'; $('#seq').innerHTML = ''; return; }
-    const n1 = sol.phase1.length, n = seq.length;
-    if (step === n) {
-      $('#info').innerHTML = `Résolu, en ${n} coups : ${n1} pour rejoindre G₁, puis ${n - n1} à l'intérieur de G₁.`;
-    } else {
-      const { phase, h, neighbours } = local, down = neighbours.filter(v => v.h < h).length, up = neighbours.filter(v => v.h > h).length;
-      const next = neighbours.find(v => v.m === seq[step]).h, rem = phase === 1 ? n1 - step : n - step;
-      $('#info').innerHTML = (phase === 1
-        ? `<span style="color:var(--p1)">Étape ${step + 1}, phase 1.</span> On est encore hors de G₁, à au moins <i>h</i> = ${h} coups (d'après les orientations et la tranche du milieu).`
-        : `<span style="color:var(--p2)">Étape ${step + 1}, phase 2.</span> On est dans G₁ ; il reste au moins <i>h</i> = ${h} coups, en n'utilisant que 10 mouvements.`)
-        + ` Parmi les ${neighbours.length} voisins, ${down} rapprochent du but, ${neighbours.length - down - up} n'y changent rien, ${up} en éloignent.`
-        + ` Le solveur joue <span class="mono">${name(seq[step])}</span> (<i>h</i> passe de ${h} à ${next}) ; encore ${rem} coup${rem > 1 ? 's' : ''} dans cette phase.`;
+  // Distance distribution of a projected graph, current distance highlighted.
+  function histo(h, cur, color) {
+    const W = 240, H = 60, max = Math.max(...h.map(v => v || 0)), bw = W / h.length;
+    let s = `<svg viewBox="0 0 ${W} ${H + 12}">`;
+    h.forEach((v, d) => {
+      const bh = Math.max(1, (v || 0) / max * H);
+      s += `<rect x="${d * bw + 1}" y="${H - bh}" width="${bw - 2}" height="${bh}" fill="${d === cur ? color : 'var(--faint)'}"><title>d = ${d} : ${num(v || 0)} sommets</title></rect>
+        <text x="${d * bw + bw / 2}" y="${H + 10}" text-anchor="middle">${d}</text>`;
+    });
+    return s + '</svg>';
+  }
+  const mean = h => h.reduce((s, v, d) => s + v * d, 0) / h.reduce((s, v) => s + v, 0);
+  function histos(ka, kb, a, b, color, la, lb) {
+    const cap = (k, d, l) => `${l} : P(<i>d</i> = ${d}) = ${pct(tables.hist[k][d] / SIZE[k])}, E[<i>d</i>] = ${mean(tables.hist[k]).toLocaleString('fr-FR', { maximumFractionDigits: 2 })}`;
+    return `<div class="histos"><div>${histo(tables.hist[ka], a, color)}${cap(ka, a, la)}</div><div>${histo(tables.hist[kb], b, color)}${cap(kb, b, lb)}</div></div>`;
+  }
+
+  const meter = rows => `<table class="meter">${rows.map(([label, before, after, total, goodIsLow]) => {
+    const ok = goodIsLow ? total - after : after;
+    return `<tr><td>${label}</td><td class="bar"><span><i style="width:${100 * ok / total}%;background:var(--good)"></i></span></td><td>${before} → <b>${after}</b> / ${total}</td></tr>`;
+  }).join('')}</table>`;
+
+  function drawSteps() {
+    if (!sol) {
+      $('#easy').innerHTML = '<p><i>Clique sur « mélanger », puis sur « résoudre ». Tu pourras ensuite suivre la solution coup par coup.</i></p>';
+      $('#deep').innerHTML = '<p><i>Choisir un sommet x ∈ G₀ (un mélange de 25 coups est une marche aléatoire de 25 pas sur Cay(G₀, S)), puis lancer la recherche.</i></p>';
+      $('#seq').innerHTML = '';
+      return;
     }
+    const n1 = sol.phase1.length, n = seq.length, n2 = n - n1;
     $('#seq').innerHTML = seq.map((m, i) =>
       `<button class="${i < n1 ? 'p1' : 'p2'} ${i < step ? 'done' : ''} ${i === step ? 'cur' : ''}" data-i="${i}">${name(m)}</button>`).join('');
+
+    if (step === n) {
+      $('#easy').innerHTML = `<p class="tag ok">Terminé !</p>
+        <p>Le cube est résolu en <b>${n} coups</b> : ${n1} pour la mission 1, ${n2} pour la mission 2.</p>
+        <p>Pour trouver ce chemin, l'ordinateur a examiné ${num(sol.nodes)} positions. Ça paraît beaucoup, mais c'est environ une sur ${sci(G0 / sol.nodes)} de toutes celles qui existent : la boussole lui a évité de se perdre.</p>`;
+      $('#deep').innerHTML = `<p class="tag ok">Arrivée · x<sub>${n}</sub> = e</p>
+        <p>Chemin de longueur <i>n</i> = <i>L</i>₁ + <i>L</i>₂ = ${n1} + ${n2} = ${n} ≤ 12 + 18 = 30 (somme des diamètres des deux graphes). L'optimum global est ≤ 20 ; l'algorithme ne garantit pas l'optimalité, mais énumère plusieurs chemins de phase 1 sous un budget de 500 ms pour réduire <i>L</i>₁ + <i>L</i>₂.</p>
+        <p>IDA* a développé ${num(sol.nodes)} nœuds, soit une fraction ${sci(sol.nodes / G0)} de |<i>G</i>₀|.</p>`;
+      return;
+    }
+
+    const { phase, h, a, b, coords: k, neighbours } = local, deg = neighbours.length;
+    const down = neighbours.filter(v => v.h < h).length, up = neighbours.filter(v => v.h > h).length, same = deg - down - up;
+    const next = neighbours.find(v => v.m === seq[step]).h;
+    const s0 = stats(states[step]), s1 = stats(states[step + 1]);
+    const choice = `Parmi les ${deg} mouvements possibles, ${pl(down, 'nous rapproche', 'nous rapprochent')} du but, ${pl(same, 'ne change rien', 'ne changent rien')} et ${pl(up, 'nous en éloigne', 'nous en éloignent')}. Le solveur joue <b class="mono">${name(seq[step])}</b> : ${say(seq[step])}.`
+      + (next < h ? ' La boussole baisse : on se rapproche.'
+        : next === h ? ` La boussole ne bouge pas : ce coup ne rapproche pas tout de suite, il prépare les suivants${down ? '' : ' (ici, aucun coup ne la fait baisser)'}. Comme aux échecs, un coup peut servir à préparer le suivant.`
+        : ' La boussole monte : c\'est un détour, mais le solveur sait qu\'il mène au but plus vite.');
+    const edges = `<p>Voisinage : ${deg} arêtes, Δ<i>h</i> ∈ {−1, 0, +1} (<i>h</i> cohérente), effectifs (${down}, ${same}, ${up}). Un coup tiré uniformément fait progresser avec probabilité ${down}/${deg} ≈ ${pct(down / deg)}. Arête choisie : <span class="mono">${name(seq[step])}</span>, <i>h</i> : ${h} → ${next}.`
+      + (next >= h ? ` Ici Δ<i>h</i> ≥ 0 alors que le nombre de coups restants sur le chemin baisse de 1 : <i>h</i> n'est qu'une borne inférieure, parfois lâche, et IDA* accepte toute arête qui garde <i>g</i> + 1 + <i>h</i>′ ≤ <i>L</i>.` : '') + '</p>';
+
+    if (phase === 1) {
+      $('#easy').innerHTML = `<p class="tag p1">Mission 1 · mettre les pièces dans le bon sens — coup ${step + 1} sur ${n}</p>
+        <p>${choice}</p>
+        <p>Ce que ça change :</p>
+        ${meter([['coins tordus', s0.twisted, s1.twisted, 8, true], ['arêtes retournées', s0.flipped, s1.flipped, 12, true], ['arêtes du milieu égarées', s0.lost, s1.lost, 4, true]])}
+        <p>La boussole indique : encore <b>au moins ${next} coup${next > 1 ? 's' : ''}</b> après celui-ci pour finir la mission (en réalité ${n1 - step - 1}). Les couleurs à leur place passent de ${s0.stickers} à ${s1.stickers} sur 54 : pas d'inquiétude si le cube a l'air plus mélangé, cette mission ne regarde pas encore les couleurs.</p>`;
+      $('#deep').innerHTML = `<p class="tag p1">Phase 1 · graphe de Schreier Sch(G₀, G₁, S) — pas ${step + 1}/${n1}</p>
+        <p>Sommet <i>x</i><sub>${step}</sub>, classe <i>G</i>₁<i>x</i> codée par (<i>co</i>, <i>eo</i>, <i>e</i>) = (${k.co}, ${k.eo}, ${k.sl}) ∈ ℤ₃⁷ × ℤ₂¹¹ × ⟦0, 494⟧.</p>
+        <p>Distances exactes (BFS) dans les projections : <i>d<sub>A</sub></i> = ${a} dans Γ<sub>A</sub> = CO × tranche (${num(SIZE.p1a)} sommets), <i>d<sub>B</sub></i> = ${b} dans Γ<sub>B</sub> = EO × tranche (${num(SIZE.p1b)}). D'où <i>h</i> = max = ${h} ≤ <i>d</i>(<i>G</i>₁<i>x</i>, <i>G</i>₁) ≤ ${n1 - step}.</p>
+        <p>Borne IDA* : <i>f</i> = <i>g</i> + <i>h</i> = ${step} + ${h} = ${step + h} ≤ <i>L</i>₁ = ${n1}.</p>
+        ${edges}
+        ${histos('p1a', 'p1b', a, b, 'var(--p1)', 'Γ<sub>A</sub>', 'Γ<sub>B</sub>')}`;
+    } else {
+      const j = step - n1, c = states[step];
+      $('#easy').innerHTML = `<p class="tag p2">Mission 2 · remettre chaque pièce à sa place — coup ${step + 1} sur ${n}</p>
+        <p>Toutes les pièces sont dans le bon sens. On n'utilise plus que 10 mouvements (tourner le dessus ou le dessous, ou des demi-tours sur les côtés) : ils ne peuvent plus retourner une pièce.</p>
+        <p>${choice}</p>
+        ${meter([['coins à leur place', s0.corners, s1.corners, 8, false], ['arêtes à leur place', s0.edges, s1.edges, 12, false], ['couleurs à leur place', s0.stickers, s1.stickers, 54, false]])}
+        <p>La boussole indique : encore <b>au moins ${next} coup${next > 1 ? 's' : ''}</b> après celui-ci (en réalité ${n - step - 1}).</p>`;
+      $('#deep').innerHTML = `<p class="tag p2">Phase 2 · graphe de Cayley Cay(G₁, S₂), |S₂| = 10 — pas ${j + 1}/${n2}</p>
+        <p>Sommet <i>x</i><sub>${step}</sub> ∈ <i>G</i>₁, codé par les rangs de Lehmer (σ<sub>c</sub>, σ<sub>e</sub>, σ<sub>t</sub>) = (${k.cp}, ${k.ud}, ${k.sp}) ∈ 𝔖₈ × 𝔖₈ × 𝔖₄. Invariant de parité : sgn σ<sub>c</sub> = ${sgn(c.cp) > 0 ? '+1' : '−1'} = sgn(σ<sub>e</sub>)·sgn(σ<sub>t</sub>), d'où |<i>G</i>₁| = 8!·8!·4!/2.</p>
+        <p>Distances exactes (BFS) : <i>d<sub>A</sub></i> = ${a} dans Γ<sub>A</sub> = 𝔖₈ (coins) × 𝔖₄ (tranche), <i>d<sub>B</sub></i> = ${b} dans Γ<sub>B</sub> = 𝔖₈ (arêtes U/D) × 𝔖₄ (${num(SIZE.p2a)} sommets chacun). D'où <i>h</i> = ${h} ≤ <i>d</i>(<i>x</i>, <i>e</i>) ≤ ${n - step}.</p>
+        <p>Borne IDA* : <i>f</i> = <i>g</i> + <i>h</i> = ${j} + ${h} = ${j + h} ≤ <i>L</i>₂ = ${n2}.</p>
+        ${edges}
+        ${histos('p2a', 'p2b', a, b, 'var(--p2)', 'Γ<sub>A</sub>', 'Γ<sub>B</sub>')}`;
+    }
   }
 
   function render() {
-    drawNet(); drawGraph(); drawInfo();
+    drawNet(); drawGraph(); drawSteps();
     for (const id of ['first', 'prev', 'next', 'last', 'play']) $('#' + id).disabled = !sol;
   }
 
@@ -260,15 +389,15 @@
     if (timer) return stop();
     if (step === seq.length) go(0);
     $('#play').textContent = 'pause';
-    timer = setInterval(() => { go(step + 1); if (step === seq.length) stop(); }, 700);
+    timer = setInterval(() => { go(step + 1); if (step === seq.length) stop(); }, 1500);
   };
   $('#graph').onclick = e => { const i = e.target.dataset.i; if (i) { stop(); go(+i); } };
   $('#seq').onclick = e => { const i = e.target.closest('button')?.dataset.i; if (i) { stop(); go(+i); } };
 
   render();
   setTimeout(() => { // let the page paint before the ~1 s table build
-    const t = Cube.init();
-    $('#status').textContent = `Prêt. Tables de distances construites en ${t.ms} ms (quatre parcours en largeur, 4 millions de sommets).`;
+    tables = Cube.init();
+    $('#status').textContent = `Prêt. Tables de distances construites en ${tables.ms} ms (quatre parcours en largeur, 4 millions de sommets).`;
     $('#solve').disabled = false;
   }, 30);
 </script>
