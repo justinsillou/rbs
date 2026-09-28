@@ -2,6 +2,12 @@
 
 Format : [Keep a Changelog](https://keepachangelog.com/fr/1.1.0/), versions [SemVer](https://semver.org/lang/fr/).
 
+## [0.7.1] - 2026-09-28
+
+### Documentation
+- Avertissement en tête du README : dépôt d'apprentissage du prompting et de l'usage réfléchi de l'IA (recommandations Anthropic, cadre AI Fluency « 4D »), non affilié à Anthropic.
+- `docs/PROMPTING.md` : le déroulé du projet version par version (demande → réponse de l'IA → leçon), les erreurs rencontrées, des conseils classés selon les 4D, un modèle de premier prompt et des liens vers les cours.
+
 ## [0.7.0] - 2026-09-28
 
 ### Ajouté

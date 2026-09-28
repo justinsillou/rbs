@@ -1,5 +1,9 @@
 # Rubik's Graph Solver
 
+> **À propos de ce dépôt.** Ce projet est avant tout un exercice d'apprentissage : il sert à **se former au prompting et à un usage réfléchi de l'IA**, en appliquant les recommandations des cours et certifications d'Anthropic ([Anthropic Academy](https://www.anthropic.com/learn), cadre [AI Fluency](https://anthropic.skilljar.com/ai-fluency-framework-foundations) « 4D » : Délégation, Description, Discernement, Diligence).
+> Le code et les textes ont été produits en dialoguant avec un assistant IA (Claude Code), puis relus, testés et vérifiés. **Le déroulé complet, les erreurs rencontrées et des conseils pour reproduire la démarche sont dans [docs/PROMPTING.md](docs/PROMPTING.md).**
+> Projet personnel, non affilié à Anthropic.
+
 Solveur de Rubik's Cube 3×3 visuel, basé sur la théorie des graphes : la résolution est un plus court chemin dans **deux graphes imbriqués** (algorithme à deux phases de Kociemba).
 
 - Phase 1 : chemin dans le graphe quotient G₀/G₁ (G₁ = ⟨U, D, R2, F2, L2, B2⟩), 18 mouvements.
