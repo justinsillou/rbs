@@ -80,6 +80,50 @@
     return f.join('');
   }
 
+  // Inverse of facelets(): colours -> cube, or { error } naming the broken rule.
+  function fromFacelets(f) {
+    for (const col of FACES) {
+      const k = [...f].filter(x => x === col).length;
+      if (k !== 9) return { error: `La couleur ${col} apparaît ${k} fois au lieu de 9.` };
+    }
+    const c = { cp: [], co: [], ep: [], eo: [] };
+    for (let i = 0; i < 8; i++) {
+      const ori = [0, 1, 2].find(o => 'UD'.includes(f[CORNER_FACELET[i][o]]));
+      const a = f[CORNER_FACELET[i][(ori + 1) % 3]], b = f[CORNER_FACELET[i][(ori + 2) % 3]];
+      const j = ori === undefined ? -1 : CORNER_COLOR.findIndex(cc => cc[1] === a && cc[2] === b);
+      if (j < 0) return { error: `Le coin n°${i + 1} a une combinaison de couleurs qui n'existe pas sur un vrai cube.` };
+      c.cp[i] = j; c.co[i] = ori;
+    }
+    for (let i = 0; i < 12; i++) {
+      const a = f[EDGE_FACELET[i][0]], b = f[EDGE_FACELET[i][1]];
+      const j = EDGE_COLOR.findIndex(e => (e[0] === a && e[1] === b) || (e[0] === b && e[1] === a));
+      if (j < 0) return { error: `L'arête n°${i + 1} a une combinaison de couleurs qui n'existe pas sur un vrai cube.` };
+      c.ep[i] = j; c.eo[i] = EDGE_COLOR[j][0] === a ? 0 : 1;
+    }
+    if (new Set(c.cp).size < 8) return { error: 'Un même coin apparaît deux fois.' };
+    if (new Set(c.ep).size < 12) return { error: 'Une même arête apparaît deux fois.' };
+    const odd = p => p.reduce((s, x, i) => s ^ p.slice(i + 1).filter(y => y < x).length % 2, 0);
+    if (c.co.reduce((a, b) => a + b, 0) % 3) return { error: 'Un coin est tordu sur place : impossible à obtenir en tournant les faces (somme des torsions ≢ 0 mod 3).' };
+    if (c.eo.reduce((a, b) => a + b, 0) % 2) return { error: 'Une arête est retournée sur place : impossible à obtenir en tournant les faces (somme des retournements ≢ 0 mod 2).' };
+    if (odd(c.cp) !== odd(c.ep)) return { error: 'Deux pièces sont échangées : impossible à obtenir en tournant les faces (parités des coins et des arêtes différentes).' };
+    return { cube: c };
+  }
+
+  // 3D geometry of each facelet: cubie position p and outward normal n (x right, y up, z front).
+  const STICKER_3D = [];
+  for (let i = 0; i < 54; i++) {
+    const r = ((i % 9) / 3) | 0, k = i % 3;
+    STICKER_3D.push([
+      { p: [k - 1, 1, r - 1], n: [0, 1, 0] },   // U
+      { p: [1, 1 - r, 1 - k], n: [1, 0, 0] },   // R
+      { p: [k - 1, 1 - r, 1], n: [0, 0, 1] },   // F
+      { p: [k - 1, -1, 1 - r], n: [0, -1, 0] }, // D
+      { p: [-1, 1 - r, k - 1], n: [-1, 0, 0] }, // L
+      { p: [1 - k, 1 - r, -1], n: [0, 0, -1] }, // B
+    ][(i / 9) | 0]);
+  }
+  const FACE_AXIS = { U: [0, 1, 0], R: [1, 0, 0], F: [0, 0, 1], D: [0, -1, 0], L: [-1, 0, 0], B: [0, 0, -1] };
+
   // Coordinates = projections of the state graph onto small graphs.
   function binom(n, k) { if (k > n) return 0; let r = 1; for (let i = 0; i < k; i++) r = r * (n - i) / (i + 1); return Math.round(r); }
   function rank(p) { // Lehmer code
@@ -238,6 +282,6 @@
     return co || eo || sl ? { phase: 1, h: h1(co, eo, sl) } : { phase: 2, h: h2(cpC(c), udC(c), spC(c)) };
   }
 
-  const api = { MOVE_NAMES, solved, mul, apply, parse, format, isSolved, scramble, randomState, facelets, init, solve, neighbourhood, estimate };
+  const api = { MOVE_NAMES, STICKER_3D, FACE_AXIS, solved, mul, apply, parse, format, isSolved, scramble, randomState, facelets, fromFacelets, init, solve, neighbourhood, estimate };
   if (typeof module !== 'undefined') module.exports = api; else root.Cube = api;
 })(this);

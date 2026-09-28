@@ -31,7 +31,24 @@
 
   /* figure: cube | graph */
   .fig { display: grid; grid-template-columns: 330px 1fr; gap: 40px; align-items: start; }
-  #net { max-width: 330px; }
+  #net { max-width: 250px; margin-top: 14px; }
+  .painting #net rect[data-i] { cursor: crosshair; }
+
+  /* 3D cube (CSS 3D, no library) */
+  .scene { height: 280px; perspective: 1000px; display: flex; align-items: center; justify-content: center; cursor: grab; touch-action: none; user-select: none; }
+  #cube3d, .cubie, .layer { position: absolute; transform-style: preserve-3d; }
+  .f { position: absolute; width: 56px; height: 56px; left: -28px; top: -28px; background: #1d1b19; backface-visibility: hidden; }
+  .f i { position: absolute; inset: 4px; border-radius: 6px; }
+  .layer.hint .f i { outline: 3px solid var(--ink); outline-offset: -3px; }
+  .move3d { font-size: 15px; min-height: 3.2em; }
+  .notation { font-size: 13px; color: var(--soft); margin-top: 4px; }
+
+  /* colour painting */
+  .palette { display: none; margin-top: 10px; }
+  .painting .palette { display: block; }
+  .painting .main-ctl { display: none; }
+  .palette .sw { width: 26px; height: 26px; border-radius: 5px; border: 2px solid var(--faint); margin: 0 4px 6px 0; cursor: pointer; padding: 0; }
+  .palette .sw.on { border-color: var(--ink); }
   .controls { margin: 14px 0 6px; }
   .controls button, .pad button {
     font: inherit; background: none; border: 0; padding: 0; margin-right: 14px; color: var(--ink); cursor: pointer;
@@ -74,6 +91,10 @@
   .histos text { fill: var(--soft); font: 9px var(--mono); }
   ol.refs { font-size: 14px; color: var(--soft); padding-left: 22px; margin-top: 40px; border-top: 1px solid var(--faint); padding-top: 16px; }
   ol.refs li { margin-bottom: 4px; }
+  table.compare { grid-column: 1 / -1; border-collapse: collapse; font-size: 15px; margin: 4px 0 8px; }
+  table.compare th { font-weight: normal; font-style: italic; text-align: left; border-bottom: 1px solid var(--ink); padding: 6px 12px 6px 0; }
+  table.compare td { border-bottom: 1px solid var(--faint); padding: 6px 12px 6px 0; vertical-align: top; }
+  table.compare td:first-child { color: var(--soft); white-space: nowrap; }
 </style>
 </head>
 <body>
@@ -82,18 +103,33 @@
   <p class="lede">Chaque mélange du cube est un point, chaque mouvement un chemin vers un point voisin. Ce solveur cherche le trajet vers le cube résolu en traversant deux graphes emboîtés. Chaque étape est expliquée deux fois : en clair à gauche, avec les mathématiques à droite. À tout moment, tu peux forcer un autre coup et voir comment le solveur s'adapte.</p>
 
   <div class="fig">
-    <div>
+    <div id="left">
+      <div class="scene" id="scene" title="Glisser pour tourner le cube"><div id="cube3d"></div></div>
+      <div class="move3d" id="move3d"></div>
+      <div class="notation">U dessus · D dessous · R droite · L gauche · F avant · B arrière — seul : quart de tour dans le sens des aiguilles d'une montre (en regardant la face) · ′ : sens inverse · 2 : demi-tour.</div>
       <svg id="net" viewBox="-.1 -.1 12.2 9.2" role="img" aria-label="Patron du cube"></svg>
-      <div class="controls">
-        <button id="scramble">mélanger</button> en <input id="len" type="number" min="1" max="200" value="25" aria-label="Nombre de coups du mélange"> coups ·
-        <button id="random">état aléatoire</button>
+      <div class="palette">
+        <div id="swatches"></div>
+        <div class="hint">Choisis une couleur, puis clique sur les cases du patron (les centres sont fixes). Recopie ton propre cube, puis valide.</div>
+        <div class="controls">
+          <button id="paintOk">valider</button>
+          <button id="paintClear">tout vider</button>
+          <button id="paintCancel">annuler</button>
+        </div>
       </div>
-      <div class="controls">
-        <button id="solve" disabled>résoudre</button>
-        <button id="reset">remettre à zéro</button>
+      <div class="main-ctl">
+        <div class="controls">
+          <button id="scramble">mélanger</button> en <input id="len" type="number" min="1" max="200" value="25" aria-label="Nombre de coups du mélange"> coups ·
+          <button id="random">état aléatoire</button> ·
+          <button id="paint">colorier</button>
+        </div>
+        <div class="controls">
+          <button id="solve" disabled>résoudre</button>
+          <button id="reset">remettre à zéro</button>
+        </div>
+        <div class="pad" id="pad" aria-label="Mouvements"></div>
+        <div class="hint">Hors résolution, ces boutons tournent le cube. Pendant une résolution, ils forcent un détour depuis l'étape courante.</div>
       </div>
-      <div class="pad" id="pad" aria-label="Mouvements"></div>
-      <div class="hint">Pendant une résolution, ces boutons forcent un détour depuis l'étape courante.</div>
       <div class="status" id="status">Construction des tables de distances…</div>
     </div>
     <div>
@@ -192,8 +228,32 @@
     </div>
 
     <div>
-      <h3>Et ailleurs ?</h3>
-      <p>Les mêmes idées servent partout. Un GPS cherche le plus court trajet dans le graphe des routes. Les chimistes utilisent les groupes pour décrire la symétrie des molécules. Les programmes qui jouent aux échecs ou au go explorent eux aussi des graphes géants, guidés par une boussole.</p>
+      <h3>Le même principe ailleurs : le taquin et le GPS</h3>
+      <p>Le taquin (le jeu des 15 plaques à faire glisser) et le GPS d'une voiture marchent exactement comme notre solveur. Dans le taquin, chaque position des plaques est une ville, et chaque glissement une route. La boussole : additionner, pour chaque plaque, le nombre de cases qui la séparent de sa place. Une plaque ne bouge que d'une case à la fois, donc il faut au moins ce nombre de coups : la boussole ne ment jamais.</p>
+      <p>Dans un GPS, les villes sont les carrefours, et les routes sont… les routes. La boussole : la distance à vol d'oiseau jusqu'à l'arrivée, car aucune route n'est plus courte que la ligne droite. Et comme notre solveur rejoint d'abord G₁, le GPS rejoint d'abord l'autoroute, roule dessus, puis redescend sur les petites routes : ce sont aussi des graphes emboîtés.</p>
+      <p>Même les pièges se ressemblent. En 1880, le taquin « 14-15 » (deux plaques inversées) a passionné l'Amérique : il est impossible, pour la même raison qu'un cube où deux pièces ont été échangées (essaie avec « colorier » !).</p>
+    </div>
+    <div class="deep">
+      <h3>Même structure, autres graphes</h3>
+      <p><b>Taquin <i>n</i>×<i>n</i></b> : sommets = configurations, arête = glissement ; (<i>n</i>²)!/2 états atteignables (9!/2 = 181 440 pour le 3×3, 16!/2 ≈ 1,05·10¹³ pour le 4×4), diamètres 31 et 80<sup><a href="#r18">[18]</a></sup>. Invariant : parité de la permutation combinée à la ligne de la case vide, d'où exactement deux orbites<sup><a href="#r15">[15]</a></sup>. L'heuristique de Manhattan est une somme de distances dans des graphes projetés (une plaque seule sur la grille), admissible car un coup déplace une seule plaque d'une case. IDA* a été introduit sur ce problème<sup><a href="#r4">[4]</a></sup>, et les bases de motifs<sup><a href="#r16">[16]</a></sup> sont l'analogue exact de nos tables BFS sur projections.</p>
+      <p><b>GPS</b> : graphe pondéré (carrefours, tronçons, temps de parcours) ; A*<sup><a href="#r14">[14]</a></sup> avec <i>h</i> = distance euclidienne / vitesse maximale, admissible par l'inégalité triangulaire. Hiérarchies de contraction<sup><a href="#r17">[17]</a></sup> : les sommets sont ordonnés par importance et la recherche bidirectionnelle ne monte que vers des sommets plus importants. C'est l'analogue de la chaîne <i>G</i>₀ ⊃ <i>G</i>₁ ⊃ {<i>e</i>} : on ramène d'abord le problème dans un sous-graphe plus petit et plus structuré.</p>
+    </div>
+
+    <table class="compare">
+      <tr><th></th><th>Rubik's Cube</th><th>Taquin 4×4</th><th>GPS</th></tr>
+      <tr><td>Sommet</td><td>position du cube</td><td>position des plaques</td><td>carrefour</td></tr>
+      <tr><td>Arête</td><td>quart ou demi-tour (18 par sommet)</td><td>glissement d'une plaque (2 à 4)</td><td>tronçon de route, pondéré par le temps</td></tr>
+      <tr><td>Taille</td><td>4,3·10¹⁹</td><td>1,05·10¹³</td><td>≈ 1,8·10⁷ carrefours (réseau européen)</td></tr>
+      <tr><td>Positions impossibles</td><td>11 remontages sur 12</td><td>1 sur 2 (le « 14-15 »)</td><td>sens interdits, zones non reliées</td></tr>
+      <tr><td>Boussole <i>h</i></td><td>BFS sur projections (orientations, permutations)</td><td>distance de Manhattan, bases de motifs</td><td>distance à vol d'oiseau / vitesse max</td></tr>
+      <tr><td>Graphes emboîtés</td><td><i>G</i>₀ ⊃ <i>G</i>₁ ⊃ {résolu}</td><td>ranger 1ʳᵉ ligne et 1ʳᵉ colonne → taquin 3×3</td><td>petites routes → nationales → autoroutes</td></tr>
+      <tr><td>Recherche</td><td>IDA* en deux phases</td><td>IDA*</td><td>A*, Dijkstra bidirectionnel</td></tr>
+      <tr><td>Pire cas</td><td>20 coups</td><td>80 coups</td><td>—</td></tr>
+    </table>
+
+    <div>
+      <h3>Et encore ailleurs ?</h3>
+      <p>Les chimistes utilisent les groupes pour décrire la symétrie des molécules. Les programmes qui jouent aux échecs ou au go explorent eux aussi des graphes géants, guidés par une boussole.</p>
     </div>
     <div class="deep">
       <h3>Liens avec d'autres sciences</h3>
@@ -215,6 +275,11 @@
     <li id="r11">World Cube Association, <a href="https://www.worldcubeassociation.org/regulations/">Règlement, article 4 (mélanges)</a>.</li>
     <li id="r12"><a href="https://en.wikipedia.org/wiki/Superflip">Superflip</a> (Wikipédia).</li>
     <li id="r13"><a href="https://www.reddit.com/r/mildyinteresting/comments/1wknkco/solving_a_rubiks_cube_with_graph_theory/">Solving a Rubik's cube with graph theory</a> (Reddit).</li>
+    <li id="r14">P. E. Hart, N. J. Nilsson, B. Raphael, <a href="https://doi.org/10.1109/TSSC.1968.300136">A Formal Basis for the Heuristic Determination of Minimum Cost Paths</a>, IEEE Trans. Systems Science and Cybernetics, 1968.</li>
+    <li id="r15">W. W. Johnson, W. E. Story, <a href="https://doi.org/10.2307/2369492">Notes on the "15" Puzzle</a>, American Journal of Mathematics 2(4), 1879.</li>
+    <li id="r16">J. C. Culberson, J. Schaeffer, <a href="https://doi.org/10.1111/0824-7935.00065">Pattern Databases</a>, Computational Intelligence 14(3), 1998.</li>
+    <li id="r17">R. Geisberger, P. Sanders, D. Schultes, D. Delling, <a href="https://doi.org/10.1007/978-3-540-68552-4_24">Contraction Hierarchies: Faster and Simpler Hierarchical Routing in Road Networks</a>, WEA 2008.</li>
+    <li id="r18">A. Brüngger, A. Marzetta, K. Fukuda, J. Nievergelt, <a href="https://doi.org/10.1023/A:1018972901171">The parallel search bench ZRAM and its applications</a>, Annals of Operations Research 90, 1999.</li>
   </ol>
 </main>
 
@@ -255,16 +320,72 @@
     };
   }
 
+  // Facelets on screen: the colours being painted, or the current state.
+  let paint = null, brush = 'U';
+  const shown = () => paint ? paint.join('') : Cube.facelets(current());
+
   function drawNet() {
-    const f = Cube.facelets(current());
+    const f = shown();
     let s = '';
     [...'URFDLB'].forEach((face, i) => {
       const [x0, y0] = NET[face];
       s += `<rect x="${x0 - .04}" y="${y0 - .04}" width="3.08" height="3.08" rx=".14" fill="#1d1b19"/>`;
       for (let k = 0; k < 9; k++)
-        s += `<rect x="${x0 + k % 3 + .07}" y="${y0 + ((k / 3) | 0) + .07}" width=".86" height=".86" rx=".1" fill="${STICKER[f[i * 9 + k]]}"/>`;
+        s += `<rect ${k === 4 ? '' : `data-i="${i * 9 + k}"`} x="${x0 + k % 3 + .07}" y="${y0 + ((k / 3) | 0) + .07}" width=".86" height=".86" rx=".1" fill="${STICKER[f[i * 9 + k]]}"/>`;
     });
     $('#net').innerHTML = s;
+  }
+
+  // 3D cube: 26 black cubies, stickers from the facelets. The layer of `move` is grouped so it can turn.
+  const U3 = 56, view = { x: -26, y: -36 };
+  const NORMALS = [['0,0,1', 'rotateY(0deg)'], ['0,0,-1', 'rotateY(180deg)'], ['1,0,0', 'rotateY(90deg)'], ['-1,0,0', 'rotateY(-90deg)'], ['0,1,0', 'rotateX(90deg)'], ['0,-1,0', 'rotateX(-90deg)']];
+  let animTimer = null;
+  function draw3d(f, move, turn) {
+    clearTimeout(animTimer);
+    const color = new Map(Cube.STICKER_3D.map((g, i) => [g.p.join() + '|' + g.n.join(), f[i]]));
+    const a = move === undefined ? null : Cube.FACE_AXIS[Cube.MOVE_NAMES[move][0]];
+    let fixed = '', layer = '';
+    for (let x = -1; x <= 1; x++) for (let y = -1; y <= 1; y++) for (let z = -1; z <= 1; z++) {
+      if (!x && !y && !z) continue;
+      const faces = NORMALS.map(([n, r]) => {
+        const c = color.get(`${x},${y},${z}|${n}`);
+        return `<div class="f" style="transform:${r} translateZ(${U3 / 2}px)">${c ? `<i style="background:${STICKER[c]}"></i>` : ''}</div>`;
+      }).join('');
+      const html = `<div class="cubie" style="transform:translate3d(${x * U3}px,${-y * U3}px,${z * U3}px)">${faces}</div>`;
+      if (a && x * a[0] + y * a[1] + z * a[2] === 1) layer += html; else fixed += html;
+    }
+    const box = $('#cube3d');
+    if (a) { // turn the camera if the face about to move is hidden
+      const o = new DOMMatrix(`rotateX(${view.x}deg) rotateY(${view.y}deg)`).transformPoint({ x: a[0], y: -a[1], z: a[2] });
+      if (o.z < .3) [view.x, view.y] = { U: [-26, -36], R: [-26, -36], F: [-26, -36], L: [-26, 36], B: [-26, 144], D: [26, -36] }[Cube.MOVE_NAMES[move][0]];
+    }
+    box.style.transition = 'transform .4s';
+    box.style.transform = `rotateX(${view.x}deg) rotateY(${view.y}deg)`;
+    box.innerHTML = fixed + `<div class="layer ${turn ? '' : 'hint'}" id="layer">${layer}</div>`;
+    if (!turn) return;
+    // Animate: clockwise seen from outside = rotate3d(+90°) about the outward axis in CSS coordinates (y down).
+    const L = $('#layer'), p = Cube.MOVE_NAMES[move].slice(1), deg = p === '2' ? 180 : p === "'" ? -90 : 90, ms = p === '2' ? 700 : 450;
+    L.getBoundingClientRect();
+    L.style.transition = `transform ${ms}ms ease-in-out`;
+    L.style.transform = `rotate3d(${a[0]}, ${-a[1]}, ${a[2]}, ${deg}deg)`;
+    animTimer = setTimeout(turn, ms + 30);
+  }
+  // Static 3D view; during a resolution, the next layer to turn is outlined.
+  const show3d = () => draw3d(shown(), !paint && active && step < path.length ? path[step].m : undefined);
+  // Play move m from facelets f, then settle on the current state.
+  const animate = (f, m) => draw3d(f, m, show3d);
+  const inverse = m => m - m % 3 + 2 - m % 3;
+
+  function drawMove() {
+    let s;
+    if (paint) s = '<i>Mode coloriage : le cube 3D suit tes couleurs.</i>';
+    else if (!active) s = '<i>Clique sur un mouvement (U, R′, F2…) pour le voir en 3D. Glisse sur le cube pour le tourner.</i>';
+    else if (step === path.length) s = `Cube résolu en ${path.length} coups.`;
+    else {
+      const m = path[step].m, n = Cube.MOVE_NAMES[m];
+      s = `Coup ${step + 1} sur ${path.length} : <b class="mono">${name(m)}</b>. Place-toi face à ${FACE_FR[n[0]]} (encadrée) et tourne-la ${TURN_FR[n.slice(1)]}. Clique « suiv. » pour le voir.`;
+    }
+    $('#move3d').innerHTML = s;
   }
 
   // Nested rings: G0 ⊃ G1 ⊃ {solved}. Radius = lower bound h in the graph the state lives in.
@@ -440,9 +561,21 @@
   }
 
   function render() {
-    drawNet(); drawGraph(); drawSteps();
+    drawNet(); drawGraph(); drawSteps(); drawMove(); show3d();
     for (const id of ['first', 'prev', 'next', 'last', 'play']) $('#' + id).disabled = !active;
   }
+
+  // Drag to orbit the 3D cube.
+  let drag = null;
+  $('#scene').onpointerdown = e => { drag = [e.clientX, e.clientY]; $('#scene').setPointerCapture(e.pointerId); $('#cube3d').style.transition = 'none'; };
+  $('#scene').onpointerup = () => { drag = null; };
+  $('#scene').onpointermove = e => {
+    if (!drag) return;
+    view.y += (e.clientX - drag[0]) * .5;
+    view.x = Math.max(-80, Math.min(80, view.x - (e.clientY - drag[1]) * .5));
+    drag = [e.clientX, e.clientY];
+    $('#cube3d').style.transform = `rotateX(${view.x}deg) rotateY(${view.y}deg)`;
+  };
 
   function solveFrom(c) {
     const r = Cube.solve(c, 500);
@@ -468,14 +601,46 @@
     $('#status').textContent = `Détour au coup ${i + 1} : ${name(m)}${orig === undefined ? '' : ` au lieu de ${name(orig)}`}. Nouveau chemin : ${path.length} coups (avant : ${before}, Δ = ${signed(path.length - before)}).`;
     render();
   }
-  function go(i) { if (active) { step = Math.max(0, Math.min(path.length, i)); render(); } }
+  function go(i) {
+    if (!active) return;
+    const from = step;
+    step = Math.max(0, Math.min(path.length, i));
+    render();
+    if (step === from + 1) animate(Cube.facelets(states[from]), path[from].m);
+    else if (step === from - 1) animate(Cube.facelets(states[from]), inverse(path[step].m));
+  }
   function stop() { clearInterval(timer); timer = null; $('#play').textContent = 'lecture'; }
 
   $('#pad').innerHTML = Cube.MOVE_NAMES.map((_, m) => `<button data-m="${m}">${name(m)}</button>`).join('');
   $('#pad').onclick = e => {
     const m = e.target.closest('button')?.dataset.m;
     if (m === undefined) return;
-    if (active) detour(+m); else setCube(Cube.apply(cube, [+m]));
+    if (active) return detour(+m);
+    const f = Cube.facelets(cube);
+    setCube(Cube.apply(cube, [+m]));
+    animate(f, +m);
+  };
+
+  // Colour painting: copy a real cube, then check it against the three invariants.
+  const COLOR_FR = { U: 'blanc', R: 'rouge', F: 'vert', D: 'jaune', L: 'orange', B: 'bleu', X: 'gris (vide)' };
+  STICKER.X = '#9a948a';
+  function setPaint(p) { paint = p; $('#left').classList.toggle('painting', !!p); render(); }
+  $('#swatches').innerHTML = Object.keys(COLOR_FR).map(c => `<button class="sw ${c === brush ? 'on' : ''}" data-c="${c}" style="background:${STICKER[c]}" title="${COLOR_FR[c]}"></button>`).join('');
+  $('#swatches').onclick = e => {
+    const c = e.target.dataset.c;
+    if (!c) return;
+    brush = c;
+    document.querySelectorAll('.sw').forEach(b => b.classList.toggle('on', b.dataset.c === c));
+  };
+  $('#paint').onclick = () => { setCube(current()); setPaint([...Cube.facelets(cube)]); $('#status').textContent = ''; };
+  $('#net').onclick = e => { const i = e.target.dataset?.i; if (paint && i !== undefined) { paint[+i] = brush; render(); } };
+  $('#paintClear').onclick = () => setPaint(paint.map((c, i) => i % 9 === 4 ? c : 'X'));
+  $('#paintCancel').onclick = () => { setPaint(null); $('#status').textContent = ''; };
+  $('#paintOk').onclick = () => {
+    const r = Cube.fromFacelets(paint.join(''));
+    if (r.error) { $('#status').textContent = 'Cube impossible : ' + r.error.replace(/couleur ([URFDLB])/, (_, c) => 'couleur ' + COLOR_FR[c]); return; }
+    paint = null; $('#left').classList.remove('painting');
+    setCube(r.cube, 'Cube saisi et valide (les trois invariants sont respectés). Clique sur « résoudre ».');
   };
   $('#scramble').onclick = () => {
     const k = Math.max(1, Math.min(200, Math.round(+$('#len').value) || 25)), s = Cube.scramble(k);

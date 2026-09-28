@@ -19,3 +19,11 @@
 - J. Scherphuis, Thistlethwaite's 52-move algorithm — https://www.jaapsch.net/puzzles/thistle.htm
 - World Cube Association, Règlement (mélanges) — https://www.worldcubeassociation.org/regulations/
 - Superflip — https://en.wikipedia.org/wiki/Superflip
+
+## Parallèle taquin / GPS
+
+- P. E. Hart, N. J. Nilsson, B. Raphael, A Formal Basis for the Heuristic Determination of Minimum Cost Paths (A*), 1968 — https://doi.org/10.1109/TSSC.1968.300136
+- W. W. Johnson, W. E. Story, Notes on the "15" Puzzle, American Journal of Mathematics 2(4), 1879 — https://doi.org/10.2307/2369492
+- J. C. Culberson, J. Schaeffer, Pattern Databases, Computational Intelligence 14(3), 1998 — https://doi.org/10.1111/0824-7935.00065
+- R. Geisberger, P. Sanders, D. Schultes, D. Delling, Contraction Hierarchies, WEA 2008 — https://doi.org/10.1007/978-3-540-68552-4_24
+- A. Brüngger, A. Marzetta, K. Fukuda, J. Nievergelt, The parallel search bench ZRAM and its applications (diamètre 80 du taquin 4×4), 1999 — https://doi.org/10.1023/A:1018972901171

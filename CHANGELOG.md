@@ -2,6 +2,13 @@
 
 Format : [Keep a Changelog](https://keepachangelog.com/fr/1.1.0/), versions [SemVer](https://semver.org/lang/fr/).
 
+## [0.5.0] - 2026-09-28
+
+### Ajouté
+- Vue 3D du cube (CSS 3D, sans bibliothèque) : coups animés pas à pas (avant et arrière), face à tourner encadrée, caméra qui pivote si cette face est cachée, rotation libre à la souris. Chaque coup est décrit en mots, avec un rappel de la notation.
+- Coloriage : recopier son propre cube sur le patron, avec validation des trois invariants et message explicite en cas de cube impossible (coin tordu, arête retournée, pièces échangées, couleur en trop).
+- Parallèle avec le taquin et le GPS : même graphe d'états, même « boussole » admissible, mêmes graphes emboîtés ; tableau comparatif et 5 références supplémentaires (A*, Johnson & Story, bases de motifs, hiérarchies de contraction, diamètre du taquin).
+
 ## [0.4.0] - 2026-09-25
 
 ### Ajouté
