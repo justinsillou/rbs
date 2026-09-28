@@ -12,7 +12,7 @@ Chaque étape est expliquée à deux niveaux, en parallèle : **En clair** (ce q
 
 À tout moment, on peut **forcer un autre coup** (clic sur un voisin du graphe ou sur un mouvement) : le solveur recalcule la suite et la page montre ce que coûte le détour, avec les contre-exemples à l'optimalité quand il y en a. On peut aussi choisir la longueur du mélange ou tirer un **état aléatoire** uniforme.
 
-Le cube est affiché en **3D** : chaque coup est animé et décrit en mots. On peut aussi **colorier** son propre cube sur le patron ; la page vérifie qu'il est réalisable (trois invariants) et explique sinon pourquoi. Une dernière partie fait le parallèle avec le **taquin** et le **GPS**, qui reposent sur le même principe de recherche.
+Le cube est affiché en **3D** : chaque coup est animé et décrit en mots. On peut aussi **colorier** son propre cube sur le patron ; la page vérifie qu'il est réalisable (trois invariants) et explique sinon pourquoi. Une section « le graphe vu de près » dessine les sommets comme de vrais cubes : le chemin cube par cube, les 18 voisins de l'état courant, et des petits graphes complets explorés par BFS. Une dernière partie fait le parallèle avec le **taquin** et le **GPS**, qui reposent sur le même principe de recherche.
 
 **Démo :** https://justinsillou.github.io/rbs/
 
@@ -51,6 +51,9 @@ src/ui/net.js        patron 2D
 src/ui/cube3d.js     cube 3D (CSS 3D), animation, rotation à la souris / au doigt
 src/ui/graph.js      graphes imbriqués, chemin, voisinage de l'étape courante
 src/ui/explain.js    textes par étape « en clair » / « en détail »
+src/ui/minicube.js   mini-cube isométrique (un sommet du graphe dessiné comme un cube)
+src/ui/closeup.js    pellicule du chemin et voisinage réel de l'état courant
+src/ui/explorer.js   petits sous-groupes dont le graphe complet tient à l'écran
 test.js              auto-vérification Node
 ```
 

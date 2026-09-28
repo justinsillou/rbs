@@ -6,6 +6,8 @@ import { drawNet } from './ui/net.js';
 import { createCube3d } from './ui/cube3d.js';
 import { drawGraph } from './ui/graph.js';
 import { stepTexts, moveHint, seqHtml } from './ui/explain.js';
+import { drawLocal, drawStrip } from './ui/closeup.js';
+import { createExplorer } from './ui/explorer.js';
 
 // path[i] = { m, phase } with phase 1 / 2 from the solver, 0 for a move forced by the user.
 const st = {
@@ -29,6 +31,9 @@ function render() {
   [$('#easy').innerHTML, $('#deep').innerHTML] = stepTexts(st, local);
   $('#seq').innerHTML = seqHtml(st);
   $('#move3d').innerHTML = moveHint(st);
+  const { active, path, step } = st;
+  drawLocal($('#local'), current(), active && step < path.length ? path[step].m : undefined, active && step > 0 ? inverse(path[step - 1].m) : undefined);
+  drawStrip($('#strip'), st);
   show3d();
   for (const id of ['first', 'prev', 'next', 'last', 'play']) $('#' + id).disabled = !st.active;
 }
@@ -68,16 +73,25 @@ function go(i) {
 }
 function stop() { clearInterval(timer); timer = null; $('#play').textContent = 'lecture'; }
 
-// Move pad: turn the cube, or force a detour during a resolution.
+// A move chosen by the user: turn the cube; during a resolution, follow the path forward or back, or force a detour.
+function playMove(m) {
+  if (!st.active) {
+    const f = facelets(st.cube);
+    setCube(apply(st.cube, [m]));
+    return animate(f, m);
+  }
+  if (m === st.path[st.step]?.m) return go(st.step + 1);
+  if (st.step > 0 && m === inverse(st.path[st.step - 1].m)) return go(st.step - 1);
+  detour(m);
+}
 $('#pad').innerHTML = MOVE_NAMES.map((_, m) => `<button data-m="${m}">${name(m)}</button>`).join('');
-$('#pad').onclick = e => {
-  const m = e.target.closest('button')?.dataset.m;
-  if (m === undefined) return;
-  if (st.active) return detour(+m);
-  const f = facelets(st.cube);
-  setCube(apply(st.cube, [+m]));
-  animate(f, +m);
-};
+$('#pad').onclick = e => { const m = e.target.closest('button')?.dataset.m; if (m !== undefined) playMove(+m); };
+$('#local').onclick = e => { const m = e.target.closest('.nbc')?.dataset.m; if (m !== undefined) { stop(); playMove(+m); } };
+$('#strip').onclick = e => { const i = e.target.closest('.node')?.dataset.i; if (i !== undefined) { stop(); go(+i); } };
+createExplorer($('#explorer'), c => {
+  setCube(c, 'Cube chargé depuis le petit graphe. Clique sur « résoudre » : le solveur retrouve-t-il le plus court chemin ?');
+  $('#left').scrollIntoView({ behavior: 'smooth' });
+});
 
 $('#scramble').onclick = () => {
   const k = Math.max(1, Math.min(200, Math.round(+$('#len').value) || 25)), s = scramble(k);
@@ -108,7 +122,7 @@ $('#play').onclick = () => {
 };
 $('#graph').onclick = e => {
   const { i, m } = e.target.dataset;
-  if (m !== undefined) detour(+m);
+  if (m !== undefined) { stop(); playMove(+m); }
   else if (i !== undefined) { stop(); go(+i); }
 };
 $('#seq').onclick = e => { const i = e.target.closest('button')?.dataset.i; if (i !== undefined) { stop(); go(+i); } };
@@ -146,4 +160,5 @@ setTimeout(() => { // let the page paint before the ~1 s table build
   const { ms } = init();
   status(`Prêt. Tables de distances construites en ${ms} ms (quatre parcours en largeur, 4 millions de sommets).`);
   $('#solve').disabled = false;
+  render(); // colour the neighbours now that h is known
 }, 30);

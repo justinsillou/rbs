@@ -63,6 +63,24 @@
     </div>
   </div>
 
+  <section>
+    <h2>Le graphe vu de près : chaque sommet est un cube</h2>
+    <p class="hint">Le schéma circulaire résume le graphe. Ici, on regarde ses vrais sommets. D'abord le chemin de la solution, cube par cube : chaque flèche est un mouvement (orange : phase 1, bleu : phase 2, violet : détour). Clique sur un cube pour y aller.</p>
+    <div class="strip" id="strip"></div>
+    <div class="closeup-grid">
+      <svg id="local" role="img" aria-label="L'état courant et ses 18 voisins"></svg>
+      <div>
+        <h3>Ce que tu vois</h3>
+        <p>Au centre, le cube tel qu'il est à l'étape en cours. Autour, les <b>18 cubes</b> qu'on obtient en faisant un seul mouvement : ce sont ses voisins dans le graphe, et chaque trait est une route. <span style="color:var(--good)">Vert</span> : ce mouvement rapproche du but ; gris : ça ne change rien ; <span style="color:var(--bad)">rouge</span> : ça éloigne. Le trait épais est le coup choisi par le solveur, et ↩ ramène au cube d'avant.</p>
+        <p>Les voisins vont par trois (par exemple R, R2 et R′) et sont reliés entre eux en pointillés : faire R puis encore R, c'est arriver sur R2. Clique sur un voisin pour y aller.</p>
+        <div class="deep">
+          <h3>Boule de rayon 1</h3>
+          <p>Sommets <i>x·s</i>, <i>s</i> ∈ <i>S</i>, |<i>S</i>| = 18. Le graphe n'est pas un arbre : pour chaque face, {<i>x</i>, <i>x</i>F, <i>x</i>F2, <i>x</i>F′} induit un <i>K</i>₄ (c'est Cay(ℤ₄, {1, 2, 3})), et deux faces opposées commutent (<i>x</i>·U·D = <i>x</i>·D·U), ce qui crée des carrés. Les sphères croissent donc comme 1, 18, 243, 3 240… au lieu de 18·17<sup><i>k</i>−1</sup> pour un arbre. Couleur : variation de l'estimation (phase, <i>h</i>) ; entrer dans <i>G</i>₁ compte comme un progrès, puis <i>h</i> décroissant.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
   <div class="levels" id="levels" role="group" aria-label="Niveau de lecture">
     <button data-level="easy" aria-pressed="true">en clair</button>
     <button data-level="deep" aria-pressed="false">en détail</button>
@@ -95,6 +113,15 @@
       <h3>Graphe de Cayley</h3>
       <p>Γ = Cay(<i>G</i>₀, <i>S</i>), |<i>S</i>| = 18, <i>S</i> = <i>S</i>⁻¹ : graphe non orienté, 18-régulier, sommet-transitif. Son diamètre vaut 20<sup><a href="#r2">[2]</a></sup> ; la plupart des positions sont à distance 18.</p>
       <p>Borne inférieure par comptage : en interdisant deux coups sur la même face et en ordonnant les faces opposées (qui commutent), le nombre de séquences canoniques de longueur <i>k</i> croît comme ≈ 18·13,35<sup><i>k</i>−1</sup>. Comme Σ<sub><i>k</i>≤17</sub> reste inférieur à |<i>G</i>₀|, certaines positions exigent au moins 18 coups. Le « superflip » en exige exactement 20 (Reid, 1995)<sup><a href="#r12">[12]</a></sup>.</p>
+    </div>
+
+    <div class="wide">
+      <h3>Des graphes assez petits pour être dessinés en entier</h3>
+      <div class="pair">
+        <p>Et si on n'avait le droit qu'à quelques mouvements ? Le nombre de positions devient assez petit pour dessiner <b>tout</b> le graphe. Chaque colonne regroupe les cubes situés au même nombre de coups du cube résolu (à gauche). Clique sur un cube : le chemin le plus court vers le résolu s'allume. Sur le vrai cube, ce dessin aurait 43 milliards de milliards de sommets : impossible, d'où la boussole.</p>
+        <p class="deep">Cay(<i>H</i>, <i>S<sub>H</sub></i>) pour des sous-groupes <i>H</i> ≤ <i>G</i>₀ : ⟨U⟩ ≅ ℤ₄ (graphe <i>K</i>₄) ; ⟨R2, U2⟩ ≅ <i>D</i>₆, diédral d'ordre 12 (cycle <i>C</i>₁₂, car R2·U2 est d'ordre 6) ; ⟨U, D⟩ ≅ ℤ₄ × ℤ₄ (produit cartésien <i>K</i>₄ □ <i>K</i>₄, diamètre 2) ; ⟨U2, D2, R2⟩, d'ordre 96 et de diamètre 10. La colonne <i>k</i> est la sphère de rayon <i>k</i> du BFS depuis <i>e</i>, et le plus court chemin se lit en remontant l'arbre BFS, pour un coût O(|<i>H</i>|·|<i>S<sub>H</sub></i>|). Pour <i>G</i>₀, |<i>G</i>₀|·|<i>S</i>| ≈ 7,8·10²⁰ : c'est exactement ce qu'IDA* et les tables sur projections contournent.</p>
+      </div>
+      <div id="explorer"></div>
     </div>
 
     <div class="easy">

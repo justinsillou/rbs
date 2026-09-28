@@ -2,6 +2,15 @@
 
 Format : [Keep a Changelog](https://keepachangelog.com/fr/1.1.0/), versions [SemVer](https://semver.org/lang/fr/).
 
+## [0.7.0] - 2026-09-28
+
+### Ajouté
+- Section « Le graphe vu de près : chaque sommet est un cube », où les sommets sont dessinés comme de vrais cubes (mini-cubes isométriques) :
+  - pellicule du chemin de résolution, cube par cube, avec les mouvements en flèches (cliquable) ;
+  - voisinage réel de l'état courant : ses 18 voisins en un coup, colorés selon le progrès, avec les triangles R/R2/R′ qui montrent que le graphe n'est pas un arbre (cliquer un voisin = avancer, reculer ou forcer un détour) ;
+  - petits graphes complets (⟨U⟩, ⟨R2, U2⟩, ⟨U, D⟩, ⟨U2, D2, R2⟩ : 4 à 96 états) disposés par sphères BFS, avec le plus court chemin vers le résolu et un bouton pour charger l'état dans le cube 3D.
+- Textes associés aux deux niveaux (en clair / en détail : boule de rayon 1, K₄ par face, sphères 1, 18, 243, 3 240, groupes ℤ₄, D₆, ℤ₄ × ℤ₄).
+
 ## [0.6.0] - 2026-09-28
 
 ### Modifié

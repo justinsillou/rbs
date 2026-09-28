@@ -95,6 +95,21 @@ table.compare td:first-child { color: var(--soft); white-space: nowrap; }
 ol.refs { font-size: 14px; color: var(--soft); padding-left: 22px; margin-top: 40px; border-top: 1px solid var(--faint); padding-top: 16px; overflow-wrap: anywhere; }
 ol.refs li { margin-bottom: 4px; }
 
+/* the graph seen up close: real cubes as vertices */
+h2 { font-size: 24px; font-weight: normal; margin: 48px 0 6px; }
+.strip { overflow-x: auto; margin: 12px 0 8px; }
+.strip text, #local text, .exgraph text { fill: var(--soft); font: italic 13px var(--serif); }
+.strip .lbl, #local .lbl, .exgraph .lbl { font: 12px var(--mono); font-style: normal; }
+.strip .node, #local .nbc, .exnode { cursor: pointer; }
+.closeup-grid { display: grid; grid-template-columns: minmax(0, 1.1fr) 1fr; gap: 40px; align-items: center; }
+.wide { grid-column: 1 / -1; }
+.pair { display: grid; grid-template-columns: 1fr 1fr; column-gap: 56px; }
+.explorer { display: grid; grid-template-columns: minmax(0, 1.6fr) 1fr; gap: 32px; align-items: start; margin-top: 8px; }
+.expreview { width: 90px; }
+.presets, .exinfo { font-size: 16px; }
+.presets button, .exinfo button { font: inherit; background: none; border: 0; padding: 0; color: var(--ink); cursor: pointer; text-decoration: underline; text-decoration-color: var(--faint); text-underline-offset: 3px; }
+.presets button[aria-pressed="true"] { text-decoration-color: var(--ink); text-decoration-thickness: 2px; }
+
 /* ---------- tablets: cube and graph stacked ---------- */
 @media (max-width: 900px) {
   main { padding: 28px 20px 72px; }
@@ -103,6 +118,8 @@ ol.refs li { margin-bottom: 4px; }
   #left { width: 100%; max-width: 560px; margin: 0 auto; }
   #net { margin-left: auto; margin-right: auto; }
   .fig > div:last-child { max-width: 640px; width: 100%; margin: 0 auto; }
+  .closeup-grid, .explorer, .pair { grid-template-columns: 1fr; gap: 16px; }
+  #local { max-width: 560px; margin: 0 auto; }
 }
 
 /* ---------- phones: one reading level at a time, step bar pinned at the bottom ---------- */

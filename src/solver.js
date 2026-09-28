@@ -62,6 +62,7 @@ function pruneTable(na, ta, nb, tb, moves) {
 }
 
 let T = null;
+export const ready = () => T !== null;
 export function init() {
   if (T) return T;
   const t0 = Date.now();
