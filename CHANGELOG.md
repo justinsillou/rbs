@@ -2,6 +2,15 @@
 
 Format : [Keep a Changelog](https://keepachangelog.com/fr/1.1.0/), versions [SemVer](https://semver.org/lang/fr/).
 
+## [0.6.0] - 2026-09-28
+
+### Modifié
+- Code découpé en modules ES : modèle (`src/cube.js`), solveur (`src/solver.js`), application (`src/app.js`) et un module par vue (`src/ui/` : patron, cube 3D, graphe, textes, formats) ; CSS dans `css/style.css`. `index.html` ne contient plus que le balisage.
+- Le site se sert désormais par HTTP (GitHub Pages ou `python -m http.server`) : les modules ne se chargent pas en `file://`.
+
+### Ajouté
+- Responsive tablette (cube et graphe empilés) et téléphone : un niveau de lecture à la fois (en clair / en détail / les deux), barre d'étapes fixée en bas de l'écran, zones tactiles agrandies (voisins du graphe, boutons), tableau comparatif défilant.
+
 ## [0.5.0] - 2026-09-28
 
 ### Ajouté

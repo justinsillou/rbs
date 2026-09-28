@@ -22,13 +22,13 @@ Site 100 % statique, rien à compiler. Sur GitHub : *Settings → Pages → Sour
 
 ## Lancer en local
 
-Pas de build, pas de dépendance. Ouvrir `index.html` dans un navigateur, ou le servir :
+Pas de build, pas de dépendance. Le code est en modules ES : il faut servir le dossier (ouvrir `index.html` directement en `file://` ne charge pas les modules) :
 
 ```bash
 python -m http.server 8000
 ```
 
-puis ouvrir http://localhost:8000.
+puis ouvrir http://localhost:8000. La page est utilisable sur ordinateur, tablette et téléphone.
 
 ## Tester
 
@@ -36,13 +36,23 @@ puis ouvrir http://localhost:8000.
 node test.js
 ```
 
-Vérifie le modèle (mouvements, facettes) et résout 20 mélanges aléatoires (~21 coups en moyenne, ~0,3 s chacun).
+Vérifie le modèle (mouvements, couleurs ↔ cube, invariants, géométrie 3D) et résout 20 mélanges et 5 états aléatoires (~21 coups en moyenne).
 
 ## Fichiers
 
-- `cube.js` : modèle cubie, coordonnées, tables (BFS), solveur IDA* deux phases, voisinage local.
-- `index.html` : interface et visualisation (SVG, JS natif).
-- `test.js` : auto-vérification Node.
+```
+index.html           balisage et contenu (théorie, références)
+css/style.css        styles, thème clair/sombre, responsive
+src/cube.js          modèle : mouvements, couleurs, invariants, géométrie 3D
+src/solver.js        coordonnées, tables BFS, IDA* deux phases, voisinage local
+src/app.js           état de l'application et câblage des commandes
+src/ui/format.js     vocabulaire français, couleurs, formats de nombres
+src/ui/net.js        patron 2D
+src/ui/cube3d.js     cube 3D (CSS 3D), animation, rotation à la souris / au doigt
+src/ui/graph.js      graphes imbriqués, chemin, voisinage de l'étape courante
+src/ui/explain.js    textes par étape « en clair » / « en détail »
+test.js              auto-vérification Node
+```
 
 ## Sources
 

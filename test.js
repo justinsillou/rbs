@@ -1,6 +1,8 @@
-// node test.js — self-check: move model, facelets, solver.
-const assert = require('assert');
-const C = require('./cube.js');
+// node test.js — self-check: move model, facelets, 3D geometry, solver.
+import assert from 'node:assert';
+import * as cube from './src/cube.js';
+import * as solver from './src/solver.js';
+const C = { ...cube, ...solver };
 
 const s = C.solved();
 assert.strictEqual(C.facelets(s), 'UUUUUUUUURRRRRRRRRFFFFFFFFFDDDDDDDDDLLLLLLLLLBBBBBBBBB');
