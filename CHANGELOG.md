@@ -2,6 +2,17 @@
 
 Format : [Keep a Changelog](https://keepachangelog.com/fr/1.1.0/), versions [SemVer](https://semver.org/lang/fr/).
 
+## [0.7.2] - 2026-10-02
+
+### Corrigé
+- Compteurs de la mission 1 homogénéisés : tout est exprimé en pièces « bien orientées / bien placées », les chiffres et les barres montent ensemble.
+- « Analogue discret du théorème de Noether » précisé comme une image (homomorphismes vers un groupe abélien), pas un énoncé de Noether.
+- Borne de 30 coups (12 + 18) : valable seulement si chaque phase est optimale ; le budget de 500 ms de la page peut l'empêcher.
+- Phrase vague sur le mélange à 25 coups remplacée par un énoncé qui ne dit que ce qui est mesuré.
+
+### Documentation
+- `docs/PROMPTING.md` : relecture croisée par une seconde IA ajoutée aux erreurs rencontrées. Diamètre 10 de ⟨U2, D2, R2⟩ confirmé par BFS (96 états).
+
 ## [0.7.1] - 2026-09-28
 
 ### Documentation

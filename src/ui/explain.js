@@ -37,8 +37,9 @@ function histos(ka, kb, a, b, color) {
 }
 
 const meter = rows => `<table class="meter">${rows.map(([label, before, after, total, goodIsLow]) => {
-  const ok = goodIsLow ? total - after : after;
-  return `<tr><td>${label}</td><td class="bar"><span><i style="width:${100 * ok / total}%;background:var(--good)"></i></span></td><td>${before} → <b>${after}</b> / ${total}</td></tr>`;
+  // Always show the "good" count (well oriented / well placed), so every bar and number rises together.
+  const good = v => goodIsLow ? total - v : v;
+  return `<tr><td>${label}</td><td class="bar"><span><i style="width:${100 * good(after) / total}%;background:var(--good)"></i></span></td><td>${good(before)} → <b>${good(after)}</b> / ${total}</td></tr>`;
 }).join('')}</table>`;
 
 // Run of consecutive moves with the same label as path[i]: moves a .. b-1.
@@ -91,7 +92,7 @@ export function stepTexts(st, local) {
       <p>Le cube est résolu en <b>${n} coups</b>.${hist}</p>
       <p>Pour trouver ${nd ? 'la dernière partie de ' : ''}ce chemin, l'ordinateur a examiné ${num(nodes)} positions. Ça paraît beaucoup, mais c'est environ une sur ${sci(G0 / nodes)} de toutes celles qui existent : la boussole lui a évité de se perdre.</p>`,
       `<p class="tag ok">Arrivée · x<sub>${n}</sub> = e</p>
-      <p>Chemin de longueur <i>n</i> = ${n}.${hist} Sans détour, <i>L</i>₁ + <i>L</i>₂ ≤ 12 + 18 = 30 (somme des diamètres) ; l'optimum global est ≤ 20. L'algorithme ne garantit pas l'optimalité, mais énumère plusieurs chemins de phase 1 sous un budget de 500 ms pour réduire <i>L</i>₁ + <i>L</i>₂.</p>
+      <p>Chemin de longueur <i>n</i> = ${n}.${hist} Sans détour, <i>L</i>₁ + <i>L</i>₂ ≤ 12 + 18 = 30 si chaque phase est optimale (somme des diamètres) ; avec le budget de 500 ms, une phase peut ne pas l'être et cette borne n'est plus garantie. L'optimum global est ≤ 20. L'algorithme ne garantit pas l'optimalité, mais énumère plusieurs chemins de phase 1 sous un budget de 500 ms pour réduire <i>L</i>₁ + <i>L</i>₂.</p>
       <p>Dernière recherche IDA* : ${num(nodes)} nœuds développés, soit une fraction ${sci(nodes / G0)} de |<i>G</i>₀|.</p>`,
     ];
   }
@@ -121,7 +122,7 @@ export function stepTexts(st, local) {
   if (phase === 1) return [
     (dEasy || `<p class="tag p1">Mission 1 · mettre les pièces dans le bon sens — coup ${step + 1} sur ${n}</p><p>${choice}</p>`) + `
       <p>Ce que ça change :</p>
-      ${meter([['coins tordus', s0.twisted, s1.twisted, 8, true], ['arêtes retournées', s0.flipped, s1.flipped, 12, true], ['arêtes du milieu égarées', s0.lost, s1.lost, 4, true]])}
+      ${meter([['coins bien orientés', s0.twisted, s1.twisted, 8, true], ['arêtes bien orientées', s0.flipped, s1.flipped, 12, true], ['arêtes du milieu bien placées', s0.lost, s1.lost, 4, true]])}
       <p>La boussole indique : encore <b>au moins ${next} coup${next > 1 ? 's' : ''}</b> après celui-ci pour finir la mission 1 (sur ce chemin : ${rem - 1}). Les couleurs à leur place passent de ${s0.stickers} à ${s1.stickers} sur 54 : pas d'inquiétude si le cube a l'air plus mélangé, cette mission ne regarde pas encore les couleurs.</p>`,
     (dDeep || `<p class="tag p1">Phase 1 · graphe de Schreier Sch(G₀, G₁, S)</p>`) + `
       <p>Sommet <i>x</i><sub>${step}</sub>, classe <i>G</i>₁<i>x</i> codée par (<i>co</i>, <i>eo</i>, <i>e</i>) = (${k.co}, ${k.eo}, ${k.sl}) ∈ ℤ₃⁷ × ℤ₂¹¹ × ⟦0, 494⟧.</p>

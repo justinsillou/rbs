@@ -111,6 +111,7 @@ Un dépôt Git vide, et un fichier `docs/SOURCES.md` avec trois liens trouvés s
 - **Une numérotation de références décalée** après un ajout, corrigée ensuite.
 - **Des captures d'écran qui échouaient** souvent. L'IA l'a dit clairement au lieu de prétendre avoir tout vérifié visuellement, et a vérifié autrement (tests, lecture de la page).
 - **Un premier visuel « trop IA »** : le style par défaut a dû être challengé.
+- **Cinq points relevés par une seconde IA** à la relecture du contenu mathématique : des compteurs incohérents (« coins tordus » qui montent à côté d'« arêtes retournées » qui baissent), une métaphore présentée comme un théorème (Noether), une borne de 30 coups vraie seulement si chaque phase est optimale, une phrase vague sur le mélange à 25 coups, et un diamètre non confirmé. Ce dernier a été vérifié en relançant le calcul (96 états, diamètre 10). Tout est corrigé en 0.7.2.
 
 > **Discernement.** Relis, teste, et demande « qu'as-tu vérifié, et comment ? ». Une IA honnête te dira aussi ce qu'elle n'a **pas** pu vérifier.
 

@@ -101,7 +101,7 @@
     <div class="deep">
       <h3>Le groupe du cube</h3>
       <p>Les rotations engendrent <i>G</i>₀ = ⟨U, R, F, D, L, B⟩, sous-groupe de 𝔖₄₈ (permutations des 48 facettes mobiles). Un état est un quadruplet (σ<sub>c</sub>, <i>o</i><sub>c</sub>, σ<sub>e</sub>, <i>o</i><sub>e</sub>) ∈ 𝔖₈ × ℤ₃⁸ × 𝔖₁₂ × ℤ₂¹². Le groupe des assemblages (𝔖₈ ⋉ ℤ₃⁸) × (𝔖₁₂ ⋉ ℤ₂¹²) contient <i>G</i>₀ comme sous-groupe d'indice 12, découpé par trois invariants : Σ<i>o</i><sub>c</sub> ≡ 0 (mod 3), Σ<i>o</i><sub>e</sub> ≡ 0 (mod 2), sgn σ<sub>c</sub> = sgn σ<sub>e</sub><sup><a href="#r9">[9]</a></sup>.</p>
-      <p>|<i>G</i>₀| = 8!·3⁷·12!·2¹¹ / 2 = 2²⁷·3¹⁴·5³·7²·11. Un remontage uniforme tombe dans <i>G</i>₀ avec probabilité 1/12 ; ces invariants jouent le rôle de quantités conservées (analogue discret du théorème de Noether).</p>
+      <p>|<i>G</i>₀| = 8!·3⁷·12!·2¹¹ / 2 = 2²⁷·3¹⁴·5³·7²·11. Un remontage uniforme tombe dans <i>G</i>₀ avec probabilité 1/12 ; ces invariants jouent le rôle de quantités conservées. C'est une image : il s'agit d'homomorphismes vers un groupe abélien (somme des orientations, signature), pas d'un théorème de Noether, qui relie une symétrie à une quantité conservée.</p>
     </div>
 
     <div class="easy">
@@ -132,7 +132,7 @@
     <div class="deep">
       <h3>Sous-groupe et graphe de Schreier</h3>
       <p><i>G</i>₁ = ⟨U, D, R2, F2, L2, B2⟩ est le stabilisateur des orientations et de la tranche E<sup><a href="#r1">[1]</a></sup>. Indice [<i>G</i>₀ : <i>G</i>₁] = 3⁷·2¹¹·C(12,4) = 2 217 093 120 ; un état uniforme est déjà dans <i>G</i>₁ avec probabilité ≈ 4,5·10⁻¹⁰.</p>
-      <p><span style="color:var(--p1)">Phase 1</span> : plus court chemin dans le graphe de Schreier Sch(<i>G</i>₀, <i>G</i>₁, <i>S</i>), dont les sommets sont les classes <i>G</i>₁<i>g</i> (diamètre 12). <span style="color:var(--p2)">Phase 2</span> : plus court chemin dans Cay(<i>G</i>₁, <i>S</i>₂), |<i>S</i>₂| = 10, |<i>G</i>₁| = 8!·8!·4!/2 = 19 508 428 800 (diamètre 18). Toute solution fait donc au plus 30 coups. Thistlethwaite (1981) utilisait une chaîne de quatre sous-groupes, pour au plus 52 coups<sup><a href="#r10">[10]</a></sup>.</p>
+      <p><span style="color:var(--p1)">Phase 1</span> : plus court chemin dans le graphe de Schreier Sch(<i>G</i>₀, <i>G</i>₁, <i>S</i>), dont les sommets sont les classes <i>G</i>₁<i>g</i> (diamètre 12). <span style="color:var(--p2)">Phase 2</span> : plus court chemin dans Cay(<i>G</i>₁, <i>S</i>₂), |<i>S</i>₂| = 10, |<i>G</i>₁| = 8!·8!·4!/2 = 19 508 428 800 (diamètre 18). Si chaque phase est résolue de façon optimale, on obtient donc au plus 12 + 18 = 30 coups ; le solveur de cette page borne son temps de recherche (500 ms), donc la phase 2 peut ne pas l'être et cette borne n'est alors qu'indicative. Thistlethwaite (1981) utilisait une chaîne de quatre sous-groupes, pour au plus 52 coups<sup><a href="#r10">[10]</a></sup>.</p>
     </div>
 
     <div class="easy">
@@ -149,7 +149,7 @@
     <div class="easy">
       <h3>Le mélange compte-t-il ?</h3>
       <p>Le solveur ne sait pas comment le cube a été mélangé : il ne regarde que la position obtenue. Deux cubes identiques auront la même solution, qu'on ait fait 25 ou 1 000 mouvements pour y arriver.</p>
-      <p>Mais la longueur du mélange change les positions qu'on obtient. Après 3 coups, le cube est au plus à 3 coups de la solution : essaie de mélanger en 3 coups, le solveur trouve souvent le chemin inverse. Avec 25 coups, on peut tomber sur presque n'importe quelle position, mais pas toutes avec la même chance. C'est pour ça qu'en compétition, on tire directement une position au hasard (bouton « état aléatoire »)<sup><a href="#r11">[11]</a></sup>.</p>
+      <p>Mais la longueur du mélange change les positions qu'on obtient. Après 3 coups, le cube est au plus à 3 coups de la solution : essaie de mélanger en 3 coups, le solveur trouve souvent le chemin inverse. Avec 25 coups, le mélange est en pratique déjà très varié, mais je n'ai pas calculé son écart avec le tirage uniforme : les positions n'ont pas toutes la même chance. C'est pour ça qu'en compétition, on tire directement une position au hasard (bouton « état aléatoire »)<sup><a href="#r11">[11]</a></sup>.</p>
     </div>
     <div class="deep">
       <h3>Mélange fini et marche aléatoire</h3>
